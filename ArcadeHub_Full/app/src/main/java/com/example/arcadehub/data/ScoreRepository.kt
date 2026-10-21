@@ -2,7 +2,6 @@ package com.example.arcadehub.data
 
 import android.content.Context
 import android.content.SharedPreferences
-import com.example.arcadehub.model.allGames
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.Query
@@ -51,21 +50,31 @@ object ScoreRepository {
         else           -> "🌱 Rookie"
     }
 
-    /** Keeps the player's best score for score-based games (2048, Snake, Flappy, etc.). */
-    fun submitBest(game: String, score: Int, points: Int = 5) {
+    /**
+     * Keeps the player's best score for score-based games (2048, Snake, Flappy, etc.).
+     * Returns true if a genuine new personal best was achieved.
+     * Points are only awarded when the score actually improves.
+     */
+    fun submitBest(game: String, score: Int, points: Int = 5): Boolean {
+        if (score <= 0) return false
+
         // 1. Instantly persist locally so progress is never lost
-        val p = getPrefs()
-        if (p != null) {
+        val p = getPrefs() ?: return false
+        val isNewBest: Boolean
+        synchronized(this) {
             val cur = p.getLong("best_$game", 0L)
-            if (score > cur) {
-                p.edit().putLong("best_$game", score.toLong()).apply()
+            isNewBest = score > cur
+            if (isNewBest) {
+                val curPts = p.getLong("total_points", 0L)
+                p.edit()
+                    .putLong("best_$game", score.toLong())
+                    .putLong("total_points", curPts + points.toLong())
+                    .apply()
             }
-            val curPts = p.getLong("total_points", 0L)
-            p.edit().putLong("total_points", curPts + points.toLong()).apply()
         }
 
         // 2. Sync to Firebase Firestore asynchronously if authenticated
-        val u = auth.currentUser ?: return
+        val u = auth.currentUser ?: return isNewBest
         val displayName = u.displayName?.ifBlank { "Player" } ?: "Player"
 
         scope.launch {
@@ -84,13 +93,17 @@ object ScoreRepository {
                             ),
                             SetOptions.merge()
                         ).await()
+                        // Award cloud points ONLY when this submission is a genuine personal best
+                        if (isNewBest) {
+                            addPoints(u.uid, displayName, points)
+                        }
                     }
-                    addPoints(u.uid, displayName, points)
                 }
             } catch (_: Exception) {
                 // Ignore cloud sync errors, local score is safely saved
             }
         }
+        return isNewBest
     }
 
     /** Counts a win for bot / multiplayer games. */
@@ -98,10 +111,14 @@ object ScoreRepository {
         // 1. Instantly persist locally
         val p = getPrefs()
         if (p != null) {
-            val cur = p.getLong("wins_$game", 0L)
-            p.edit().putLong("wins_$game", cur + 1).apply()
-            val curPts = p.getLong("total_points", 0L)
-            p.edit().putLong("total_points", curPts + points.toLong()).apply()
+            synchronized(this) {
+                val cur = p.getLong("wins_$game", 0L)
+                val curPts = p.getLong("total_points", 0L)
+                p.edit()
+                    .putLong("wins_$game", cur + 1)
+                    .putLong("total_points", curPts + points.toLong())
+                    .apply()
+            }
         }
 
         // 2. Sync to Firebase Firestore asynchronously if authenticated
@@ -207,36 +224,20 @@ object ScoreRepository {
             // Firestore not ready or offline: return local records gracefully
         }
 
-        // Offline / Local fallback: Show player's actual local score and playful arcade challengers
-        return getLocalFallbackEntries(game, currentUid, currentName, localScore)
+        // Offline / Local fallback: Show player's own score only (no fake entries)
+        return getLocalFallbackEntries(currentUid, currentName, localScore)
     }
 
     private fun getLocalFallbackEntries(
-        game: String?,
         myUid: String,
         myName: String,
         myScore: Long
     ): List<LbEntry> {
-        val list = mutableListOf<LbEntry>()
-        list.add(LbEntry(myUid, myName, myScore, isLocal = true))
-
-        // If player has 0 score, give them some targets to beat!
-        val sampleTargets = if (game == null) {
-            listOf(
-                LbEntry("bot_3", "ArcadeChampion", maxOf(myScore + 180, 450L)),
-                LbEntry("bot_2", "SpeedyGamer", maxOf(myScore + 80, 220L)),
-                LbEntry("bot_1", "RetroMaster", maxOf(myScore - 40, 80L).coerceAtLeast(20L))
-            )
-        } else if (game == "2048") {
-            listOf(
-                LbEntry("bot_3", "TileWizard", maxOf(myScore + 1024, 4096L)),
-                LbEntry("bot_2", "MergeKing", maxOf(myScore + 512, 2048L)),
-                LbEntry("bot_1", "GridPro", maxOf(myScore - 200, 1024L).coerceAtLeast(256L))
-            )
+        // Only show the real player's local score — no fake bot entries
+        return if (myScore > 0) {
+            listOf(LbEntry(myUid, myName, myScore, isLocal = true))
         } else {
             emptyList()
         }
-
-        return (list + sampleTargets).sortedByDescending { it.score }
     }
 }

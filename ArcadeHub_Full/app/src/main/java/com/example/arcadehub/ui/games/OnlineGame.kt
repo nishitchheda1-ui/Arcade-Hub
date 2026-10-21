@@ -282,8 +282,12 @@ fun OnlineGame(onExit: () -> Unit) {
         val flow: Flow<Room?> = remember(c) { OnlineRepository.listen(c) }
         val room by flow.collectAsState(initial = null)
         val r = room
-        LaunchedEffect(r?.status) {
-            if (r != null && r.status == "done" && r.winner == me) ScoreRepository.addWin("online", 15)
+        var awardedRoomCode by remember { mutableStateOf<String?>(null) }
+        LaunchedEffect(r?.status, r?.winner, c) {
+            if (r != null && r.status == "done" && r.winner == me && awardedRoomCode != c) {
+                awardedRoomCode = c
+                ScoreRepository.addWin("online", 15)
+            }
         }
 
         GameScaffold("Room $c", { code = null; input = "" }) {

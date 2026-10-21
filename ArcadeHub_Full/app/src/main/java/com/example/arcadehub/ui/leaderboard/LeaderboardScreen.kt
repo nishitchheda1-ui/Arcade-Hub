@@ -29,6 +29,7 @@ fun LeaderboardScreen(onBack: () -> Unit) {
     var sel by remember { mutableStateOf<String?>(null) }
     var rows by remember { mutableStateOf<List<LbEntry>?>(null) }
     var isLocalMode by remember { mutableStateOf(false) }
+    var errorMsg by remember { mutableStateOf<String?>(null) }
     var reload by remember { mutableIntStateOf(0) }
     val auth = FirebaseAuth.getInstance()
     val me = auth.currentUser?.uid ?: "local_player"
@@ -44,6 +45,7 @@ fun LeaderboardScreen(onBack: () -> Unit) {
     LaunchedEffect(sel, reload) {
         rows = null
         isLocalMode = false
+        errorMsg = null
         try {
             val res = ScoreRepository.top(sel)
             rows = res
@@ -51,6 +53,7 @@ fun LeaderboardScreen(onBack: () -> Unit) {
         } catch (e: Exception) {
             if (e is CancellationException && e !is TimeoutCancellationException) throw e
             rows = emptyList()
+            errorMsg = e.message ?: "Could not load leaderboard"
         }
     }
 
@@ -129,7 +132,7 @@ fun LeaderboardScreen(onBack: () -> Unit) {
                 )
             }
 
-            // Current player rank status
+            // Current player rank status & personal best indicator
             Row(
                 Modifier.fillMaxWidth().padding(top = 8.dp),
                 verticalAlignment = Alignment.CenterVertically,
@@ -141,101 +144,196 @@ fun LeaderboardScreen(onBack: () -> Unit) {
                     fontWeight = FontWeight.Black,
                     fontSize = 13.sp
                 )
-                Text(
-                    "Your Best: $myScore $unit",
-                    color = Coral,
-                    fontWeight = FontWeight.Black,
-                    fontSize = 13.sp
-                )
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text("⭐ ", fontSize = 12.sp)
+                    Text(
+                        "Personal Best: $myScore $unit",
+                        color = Coral,
+                        fontWeight = FontWeight.Black,
+                        fontSize = 13.sp
+                    )
+                }
+            }
+        }
+
+        // Offline / Local-only indicator banner with Retry Action
+        if (isLocalMode && list != null && list.isNotEmpty()) {
+            Box(
+                Modifier
+                    .fillMaxWidth()
+                    .padding(bottom = 10.dp)
+                    .clip(RoundedCornerShape(12.dp))
+                    .background(Tangerine.copy(alpha = 0.15f))
+                    .border(2.dp, Tangerine.copy(alpha = 0.4f), RoundedCornerShape(12.dp))
+                    .padding(horizontal = 14.dp, vertical = 8.dp)
+            ) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        "📱 Showing local scores · Connect for global rankings",
+                        color = Tangerine,
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 12.sp,
+                        modifier = Modifier.weight(1f)
+                    )
+                    Box(
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(8.dp))
+                            .background(Sun)
+                            .border(1.5.dp, Ink, RoundedCornerShape(8.dp))
+                            .clickable { reload++ }
+                            .padding(horizontal = 10.dp, vertical = 4.dp)
+                    ) {
+                        Text("🔄 RETRY", color = Ink, fontWeight = FontWeight.Black, fontSize = 11.sp)
+                    }
+                }
             }
         }
 
         if (list == null) {
-            Box(Modifier.fillMaxWidth().padding(32.dp), contentAlignment = Alignment.Center) {
+            Column(
+                Modifier.fillMaxWidth().padding(32.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
                 CircularProgressIndicator(color = Sun)
+                Spacer(Modifier.height(12.dp))
+                Text("Loading leaderboard...", color = Color.White.copy(alpha = 0.8f), fontSize = 14.sp)
             }
         } else {
             if (list.isEmpty()) {
-                Text("No scores yet. Play a game to record your score!", color = Color.White, fontWeight = FontWeight.Bold)
-            }
+                Column(
+                    Modifier.fillMaxWidth().padding(vertical = 24.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    Text("🕹️", fontSize = 44.sp)
+                    Spacer(Modifier.height(8.dp))
+                    Text(
+                        if (errorMsg != null) "⚠️ $errorMsg" else "No scores recorded yet.\nPlay a game to record your score!",
+                        color = Color.White,
+                        fontWeight = FontWeight.Bold,
+                        textAlign = TextAlign.Center,
+                        modifier = Modifier.padding(bottom = 12.dp)
+                    )
+                    GameButton(
+                        "🔄 RETRY",
+                        onClick = { reload++ },
+                        modifier = Modifier.fillMaxWidth(0.5f),
+                        color = Sun,
+                        fontSize = 14.sp
+                    )
+                }
+            } else {
+                LazyColumn(
+                    verticalArrangement = Arrangement.spacedBy(10.dp),
+                    contentPadding = PaddingValues(bottom = 20.dp)
+                ) {
+                    itemsIndexed(list) { i, e ->
+                        val isMine = e.uid == me || e.isLocal || e.name.contains("(you)", ignoreCase = true)
+                        val isTop3 = i < 3
+                        val shape = RoundedCornerShape(16.dp)
 
-            LazyColumn(
-                verticalArrangement = Arrangement.spacedBy(10.dp),
-                contentPadding = PaddingValues(bottom = 20.dp)
-            ) {
-                itemsIndexed(list) { i, e ->
-                    val isMine = e.uid == me || e.isLocal || e.name.contains("(you)", ignoreCase = true)
-                    val shape = RoundedCornerShape(16.dp)
+                        // Top-3 background and border distinction
+                        val bgColor = when {
+                            isMine -> Sun
+                            i == 0 -> Color(0xFFFFF8DC) // Gold tint
+                            i == 1 -> Color(0xFFF2F3F5) // Silver tint
+                            i == 2 -> Color(0xFFFAF0E6) // Bronze tint
+                            else -> Cream
+                        }
 
-                    Box(
-                        Modifier
-                            .fillMaxWidth()
-                            .clip(shape)
-                            .background(if (isMine) Sun else Cream)
-                            .border(3.dp, Ink, shape)
-                            .padding(horizontal = 14.dp, vertical = 12.dp)
-                    ) {
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            // Rank Medal or Number
-                            Text(
-                                text = when (i) {
-                                    0 -> "🥇"
-                                    1 -> "🥈"
-                                    2 -> "🥉"
-                                    else -> "#${i + 1}"
-                                },
-                                fontSize = if (i < 3) 22.sp else 16.sp,
-                                color = Ink,
-                                fontWeight = FontWeight.Black,
-                                modifier = Modifier.width(46.dp)
-                            )
+                        val borderColor = when (i) {
+                            0 -> Color(0xFFFFD700) // Gold border
+                            1 -> Color(0xFFB0B7C0) // Silver border
+                            2 -> Color(0xFFCD7F32) // Bronze border
+                            else -> Ink
+                        }
 
-                            // Avatar Bubble
-                            Box(
-                                Modifier
-                                    .size(34.dp)
-                                    .clip(CircleShape)
-                                    .background(if (isMine) Coral.copy(alpha = 0.3f) else Sky.copy(alpha = 0.3f))
-                                    .border(2.dp, Ink, CircleShape),
-                                contentAlignment = Alignment.Center
-                            ) {
-                                Text(if (isMine) "👤" else "🎮", fontSize = 16.sp)
-                            }
-
-                            Spacer(Modifier.width(10.dp))
-
-                            // Name & Tier
-                            Column(Modifier.weight(1f)) {
+                        Box(
+                            Modifier
+                                .fillMaxWidth()
+                                .clip(shape)
+                                .background(bgColor)
+                                .border(if (isTop3) 4.dp else 3.dp, borderColor, shape)
+                                .padding(horizontal = 14.dp, vertical = if (isTop3) 14.dp else 12.dp)
+                        ) {
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                // Rank Medal or Number
                                 Text(
-                                    text = e.name + if (isMine && !e.name.contains("(you)", ignoreCase = true)) " (You)" else "",
+                                    text = when (i) {
+                                        0 -> "🥇"
+                                        1 -> "🥈"
+                                        2 -> "🥉"
+                                        else -> "#${i + 1}"
+                                    },
+                                    fontSize = if (isTop3) 26.sp else 16.sp,
                                     color = Ink,
                                     fontWeight = FontWeight.Black,
-                                    fontSize = 15.sp,
-                                    maxLines = 1
+                                    modifier = Modifier.width(46.dp)
                                 )
-                                if (sel == null) {
+
+                                // Avatar Bubble
+                                Box(
+                                    Modifier
+                                        .size(if (isTop3) 38.dp else 34.dp)
+                                        .clip(CircleShape)
+                                        .background(if (isMine) Coral.copy(alpha = 0.3f) else Sky.copy(alpha = 0.3f))
+                                        .border(2.dp, Ink, CircleShape),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Text(if (isMine) "👤" else "🎮", fontSize = if (isTop3) 18.sp else 16.sp)
+                                }
+
+                                Spacer(Modifier.width(10.dp))
+
+                                // Name, Tier & Local Tag
+                                Column(Modifier.weight(1f)) {
+                                    Row(verticalAlignment = Alignment.CenterVertically) {
+                                        Text(
+                                            text = e.name + if (isMine && !e.name.contains("(you)", ignoreCase = true)) " (You)" else "",
+                                            color = Ink,
+                                            fontWeight = FontWeight.Black,
+                                            fontSize = if (isTop3) 16.sp else 15.sp,
+                                            maxLines = 1
+                                        )
+                                        if (e.isLocal) {
+                                            Spacer(Modifier.width(6.dp))
+                                            Box(
+                                                Modifier
+                                                    .clip(RoundedCornerShape(6.dp))
+                                                    .background(Tangerine.copy(alpha = 0.2f))
+                                                    .padding(horizontal = 5.dp, vertical = 1.dp)
+                                            ) {
+                                                Text("📱 Local", color = Tangerine, fontSize = 10.sp, fontWeight = FontWeight.Bold)
+                                            }
+                                        }
+                                    }
+                                    if (sel == null) {
+                                        Text(
+                                            ScoreRepository.getTier(e.score),
+                                            color = Ink.copy(alpha = 0.6f),
+                                            fontSize = 11.sp,
+                                            fontWeight = FontWeight.Bold
+                                        )
+                                    }
+                                }
+
+                                // Score Badge
+                                Box(
+                                    Modifier
+                                        .clip(RoundedCornerShape(10.dp))
+                                        .background(if (isMine) Ink else Board)
+                                        .padding(horizontal = 10.dp, vertical = 5.dp)
+                                ) {
                                     Text(
-                                        ScoreRepository.getTier(e.score),
-                                        color = Ink.copy(alpha = 0.6f),
-                                        fontSize = 11.sp,
-                                        fontWeight = FontWeight.Bold
+                                        text = "${e.score} $unit",
+                                        color = if (isMine) Sun else Color.White,
+                                        fontWeight = FontWeight.Black,
+                                        fontSize = 13.sp
                                     )
                                 }
-                            }
-
-                            // Score Badge
-                            Box(
-                                Modifier
-                                    .clip(RoundedCornerShape(10.dp))
-                                    .background(if (isMine) Ink else Board)
-                                    .padding(horizontal = 10.dp, vertical = 5.dp)
-                            ) {
-                                Text(
-                                    text = "${e.score} $unit",
-                                    color = if (isMine) Sun else Color.White,
-                                    fontWeight = FontWeight.Black,
-                                    fontSize = 13.sp
-                                )
                             }
                         }
                     }

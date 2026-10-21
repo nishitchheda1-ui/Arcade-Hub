@@ -219,7 +219,16 @@ fun BreakoutGame(onExit: () -> Unit) {
         }
     }
 
-    DisposableEffect(Unit) { onDispose { if (!over && score > 0) ScoreRepository.submitBest("breakout", score) } }
+    // Submit score on navigate-away only if game was NOT already over
+    val currentBreakoutScore by rememberUpdatedState(score)
+    val currentBreakoutOver by rememberUpdatedState(over)
+    DisposableEffect(Unit) {
+        onDispose {
+            if (!currentBreakoutOver && currentBreakoutScore > 0) {
+                ScoreRepository.submitBest("breakout", currentBreakoutScore)
+            }
+        }
+    }
 
     GameScaffold("Breakout", onExit) {
         Text("Score: $score    Lives: ${"❤".repeat(max(lives, 0))}    Lv $level", color = Sun, fontWeight = FontWeight.Bold)
