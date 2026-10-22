@@ -282,15 +282,24 @@ fun OnlineGame(onExit: () -> Unit) {
         val flow: Flow<Room?> = remember(c) { OnlineRepository.listen(c) }
         val room by flow.collectAsState(initial = null)
         val r = room
-        var awardedRoomCode by remember { mutableStateOf<String?>(null) }
-        LaunchedEffect(r?.status, r?.winner, c) {
-            if (r != null && r.status == "done" && r.winner == me && awardedRoomCode != c) {
-                awardedRoomCode = c
+        var awardedRounds by remember { mutableStateOf(setOf<Int>()) }
+        val roundNum = r?.round ?: 1
+
+        LaunchedEffect(r?.status, roundNum) {
+            if (r != null && r.status == "done" && r.winner == me && !awardedRounds.contains(roundNum)) {
+                awardedRounds = awardedRounds + roundNum
                 ScoreRepository.addWin("online", 15)
             }
         }
 
-        GameScaffold("Room $c", { code = null; input = "" }) {
+        GameScaffold(
+            title = "Room $c",
+            onBack = {
+                scope.launch { OnlineRepository.leaveRoom(c, me) }
+                code = null
+                input = ""
+            }
+        ) {
             Spacer(Modifier.height(12.dp))
             when {
                 r == null -> {
@@ -307,8 +316,27 @@ fun OnlineGame(onExit: () -> Unit) {
                     CircularProgressIndicator(color = Sun)
                     Text("Waiting for opponent to join...", color = Color.White.copy(alpha = 0.8f), modifier = Modifier.padding(top = 12.dp))
                 }
+                r.status == "abandoned" -> {
+                    CreamCard(Modifier.fillMaxWidth()) {
+                        Text("ROOM DISCONNECTED", color = Coral, fontWeight = FontWeight.Black, fontSize = 16.sp)
+                        Spacer(Modifier.height(8.dp))
+                        Text("The other player has left the match.", color = Ink.copy(alpha = 0.8f), fontSize = 14.sp)
+                        Spacer(Modifier.height(14.dp))
+                        GameButton("RETURN TO LOBBY", { code = null; input = "" }, Modifier.fillMaxWidth(), color = Sun)
+                    }
+                }
                 else -> {
-                    Text("${r.hostName} vs ${r.guestName ?: "?"}", color = Color.White.copy(alpha = 0.8f), fontSize = 14.sp)
+                    val opponentName = if (me == 1) (r.guestName ?: "Guest") else r.hostName
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text("${r.hostName} vs ${r.guestName ?: "?"}", color = Color.White.copy(alpha = 0.8f), fontSize = 14.sp)
+                        if (r.round > 1) {
+                            Text("Round ${r.round}", color = Sun, fontWeight = FontWeight.Bold, fontSize = 13.sp)
+                        }
+                    }
                     val mine = if (r.game == "ttt") (if (me == 1) "X" else "O") else (if (me == 1) "Pink" else "Green")
                     Text(
                         when {
@@ -326,9 +354,118 @@ fun OnlineGame(onExit: () -> Unit) {
                         if (r.status == "playing" && r.turn == me) scope.launch { try { OnlineRepository.move(c, me, i) } catch (_: Exception) {} }
                     }
                     if (r.game == "ttt") TttBoard(r.board, onPick) else C4Board(r.board, onPick)
+
                     if (r.status == "done") {
-                        Spacer(Modifier.height(16.dp))
-                        GameButton("LEAVE ROOM", { code = null; input = "" }, Modifier.fillMaxWidth(), color = Coral)
+                        val myRematch = if (me == 1) r.rematch1 else r.rematch2
+                        val oppRematch = if (me == 1) r.rematch2 else r.rematch1
+
+                        when {
+                            oppRematch && !myRematch -> {
+                                Spacer(Modifier.height(12.dp))
+                                CreamCard(Modifier.fillMaxWidth()) {
+                                    Row(verticalAlignment = Alignment.CenterVertically) {
+                                        Text("🔥", fontSize = 22.sp)
+                                        Spacer(Modifier.width(8.dp))
+                                        Column {
+                                            Text("REMATCH OFFERED!", color = Leaf, fontWeight = FontWeight.Black, fontSize = 15.sp)
+                                            Text("$opponentName wants to play again!", color = Ink.copy(alpha = 0.85f), fontSize = 13.sp)
+                                        }
+                                    }
+                                }
+                                Spacer(Modifier.height(12.dp))
+                                Row(horizontalArrangement = Arrangement.spacedBy(10.dp), modifier = Modifier.fillMaxWidth()) {
+                                    GameButton(
+                                        text = "⚡ ACCEPT REMATCH",
+                                        onClick = {
+                                            scope.launch {
+                                                try {
+                                                    OnlineRepository.playAgain(c, me)
+                                                } catch (e: Exception) {
+                                                    Toast.makeText(context, "Error: ${e.message}", Toast.LENGTH_SHORT).show()
+                                                }
+                                            }
+                                        },
+                                        modifier = Modifier.weight(1.3f),
+                                        color = Leaf
+                                    )
+                                    GameButton(
+                                        text = "LEAVE",
+                                        onClick = {
+                                            scope.launch { OnlineRepository.leaveRoom(c, me) }
+                                            code = null
+                                            input = ""
+                                        },
+                                        modifier = Modifier.weight(0.7f),
+                                        color = Coral
+                                    )
+                                }
+                            }
+                            myRematch && !oppRematch -> {
+                                Spacer(Modifier.height(12.dp))
+                                CreamCard(Modifier.fillMaxWidth()) {
+                                    Row(verticalAlignment = Alignment.CenterVertically) {
+                                        CircularProgressIndicator(Modifier.size(18.dp), color = Ink, strokeWidth = 2.5.dp)
+                                        Spacer(Modifier.width(10.dp))
+                                        Column {
+                                            Text("REMATCH REQUESTED (1/2)", color = Ink, fontWeight = FontWeight.Black, fontSize = 14.sp)
+                                            Text("Waiting for $opponentName to accept...", color = Ink.copy(alpha = 0.75f), fontSize = 12.sp)
+                                        }
+                                    }
+                                }
+                                Spacer(Modifier.height(12.dp))
+                                Row(horizontalArrangement = Arrangement.spacedBy(10.dp), modifier = Modifier.fillMaxWidth()) {
+                                    GameButton(
+                                        text = "WAITING... (1/2)",
+                                        onClick = {},
+                                        modifier = Modifier.weight(1.3f),
+                                        color = Cream,
+                                        enabled = false
+                                    )
+                                    GameButton(
+                                        text = "LEAVE",
+                                        onClick = {
+                                            scope.launch {
+                                                OnlineRepository.cancelPlayAgain(c, me)
+                                                OnlineRepository.leaveRoom(c, me)
+                                            }
+                                            code = null
+                                            input = ""
+                                        },
+                                        modifier = Modifier.weight(0.7f),
+                                        color = Coral
+                                    )
+                                }
+                            }
+                            else -> {
+                                Spacer(Modifier.height(16.dp))
+                                Row(horizontalArrangement = Arrangement.spacedBy(10.dp), modifier = Modifier.fillMaxWidth()) {
+                                    GameButton(
+                                        text = "🔄 PLAY AGAIN",
+                                        onClick = {
+                                            scope.launch {
+                                                try {
+                                                    OnlineRepository.playAgain(c, me)
+                                                } catch (e: Exception) {
+                                                    Toast.makeText(context, "Error: ${e.message}", Toast.LENGTH_SHORT).show()
+                                                }
+                                            }
+                                        },
+                                        modifier = Modifier.weight(1.2f),
+                                        color = Leaf
+                                    )
+                                    GameButton(
+                                        text = "LEAVE ROOM",
+                                        onClick = {
+                                            scope.launch { OnlineRepository.leaveRoom(c, me) }
+                                            code = null
+                                            input = ""
+                                        },
+                                        modifier = Modifier.weight(0.8f),
+                                        color = Coral
+                                    )
+                                }
+                            }
+                        }
                     }
                 }
             }

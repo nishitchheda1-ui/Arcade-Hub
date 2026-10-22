@@ -56,15 +56,7 @@ fun SnakeGame(onExit: () -> Unit) {
         }
     }
 
-    val currentSnakeScore by rememberUpdatedState(score)
-    val currentSnakeOver by rememberUpdatedState(over)
-    DisposableEffect(Unit) {
-        onDispose {
-            if (!currentSnakeOver && currentSnakeScore > 0) {
-                ScoreRepository.submitBest("snake", currentSnakeScore)
-            }
-        }
-    }
+    DisposableEffect(Unit) { onDispose { if (!over && score > 0) ScoreRepository.submitBest("snake", score) } }
 
     GameScaffold("Snake", onExit) {
         Text("Score: $score", color = Leaf, fontSize = 20.sp, fontWeight = FontWeight.Bold)
@@ -127,16 +119,6 @@ fun FlappyGame(onExit: () -> Unit) {
             val hit = birdY < 16f || birdY > h - 16f ||
                 ps.any { 114f > it.x && 86f < it.x + 60f && (birdY - 14f < it.gap || birdY + 14f > it.gap + 170f) }
             if (hit) { over = true; ScoreRepository.submitBest("flappy", score) }
-        }
-    }
-
-    val currentFlappyScore by rememberUpdatedState(score)
-    val currentFlappyOver by rememberUpdatedState(over)
-    DisposableEffect(Unit) {
-        onDispose {
-            if (!currentFlappyOver && currentFlappyScore > 0) {
-                ScoreRepository.submitBest("flappy", currentFlappyScore)
-            }
         }
     }
 
@@ -221,6 +203,7 @@ fun Game2048(onExit: () -> Unit) {
         score = newScore
         if (newScore > localBest) {
             localBest = newScore.toLong()
+            ScoreRepository.submitBest("2048", newScore)
         }
         if ((0..3).none { move2048(board, it).third }) {
             over = true
@@ -228,15 +211,9 @@ fun Game2048(onExit: () -> Unit) {
         }
     }
 
-    // Submit score on navigate-away only if game was NOT already over
-    // (game-over already submitted above)
-    val current2048Score by rememberUpdatedState(score)
-    val current2048Over by rememberUpdatedState(over)
-    DisposableEffect(Unit) {
+    DisposableEffect(score) {
         onDispose {
-            if (!current2048Over && current2048Score > 0) {
-                ScoreRepository.submitBest("2048", current2048Score, points = 5)
-            }
+            if (score > 0) ScoreRepository.submitBest("2048", score)
         }
     }
 
