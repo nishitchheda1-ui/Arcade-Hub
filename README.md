@@ -44,8 +44,4 @@ A multi-game Android arcade app built with **Kotlin** and **Jetpack Compose**. S
 5. Create a Firestore database with the ID **(default)** and publish the security rules from `SETUP.md`.
 6. Run the app.
 
-## 📸 Screenshots
-_Add screenshots here._
 
-## 📄 License
-MIT
