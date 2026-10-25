@@ -36,7 +36,8 @@ import kotlinx.coroutines.tasks.await
 
 data class Room(
     val code: String, val game: String, val hostName: String, val guestName: String?,
-    val board: List<Int>, val turn: Int, val status: String, val winner: Int
+    val board: List<Int>, val turn: Int, val status: String, val winner: Int,
+    val rematch1: Boolean = false, val rematch2: Boolean = false, val round: Int = 1
 )
 
 /** Online rooms for Tic Tac Toe ("ttt") and Connect Four ("c4"). Host = player 1, guest = player 2. */
@@ -53,13 +54,14 @@ object OnlineRepository {
             val ref = db.collection("rooms").document(code)
             val ok = db.runTransaction { t ->
                 val s = t.get(ref)
-                if (s.exists() && s.getString("status") != "done") false
+                if (s.exists() && s.getString("status") != "done" && s.getString("status") != "abandoned") false
                 else {
                     t.set(ref, mapOf(
                         "game" to game, "hostUid" to u.uid, "hostName" to (u.displayName ?: "Player"),
                         "guestUid" to null, "guestName" to null,
                         "board" to List(if (game == "ttt") 9 else 42) { 0 },
-                        "turn" to 1, "status" to "waiting", "winner" to 0
+                        "turn" to 1, "status" to "waiting", "winner" to 0,
+                        "rematch1" to false, "rematch2" to false, "round" to 1
                     ))
                     true
                 }
@@ -102,10 +104,76 @@ object OnlineRepository {
             val res = if (ttt) tttResult(board) else c4Result(board)
             t.update(ref, mapOf(
                 "board" to board.toList(), "turn" to 3 - me, "winner" to res,
-                "status" to if (res != 0) "done" else "playing"
+                "status" to if (res != 0) "done" else "playing",
+                "rematch1" to false, "rematch2" to false
             ))
             true
         }.await()
+    }
+
+    suspend fun playAgain(code: String, me: Int) = withTimeout(15_000) {
+        val ref = db.collection("rooms").document(code)
+        db.runTransaction { t ->
+            val s = t.get(ref)
+            if (!s.exists()) return@runTransaction false
+            val status = s.getString("status") ?: ""
+            if (status != "done") return@runTransaction false
+
+            val r1 = s.getBoolean("rematch1") ?: false
+            val r2 = s.getBoolean("rematch2") ?: false
+            val opponentReady = if (me == 1) r2 else r1
+
+            if (opponentReady) {
+                val game = s.getString("game") ?: "ttt"
+                val curRound = (s.getLong("round") ?: 1L).toInt()
+                val nextRound = curRound + 1
+                val nextTurn = if (nextRound % 2 == 1) 1 else 2
+                t.update(ref, mapOf(
+                    "board" to List(if (game == "ttt") 9 else 42) { 0 },
+                    "turn" to nextTurn,
+                    "status" to "playing",
+                    "winner" to 0,
+                    "rematch1" to false,
+                    "rematch2" to false,
+                    "round" to nextRound
+                ))
+            } else {
+                t.update(ref, mapOf(
+                    if (me == 1) "rematch1" to true else "rematch2" to true
+                ))
+            }
+            true
+        }.await()
+    }
+
+    suspend fun cancelPlayAgain(code: String, me: Int) {
+        try {
+            val ref = db.collection("rooms").document(code)
+            db.runTransaction { t ->
+                val s = t.get(ref)
+                if (s.exists() && s.getString("status") == "done") {
+                    t.update(ref, mapOf(if (me == 1) "rematch1" to false else "rematch2" to false))
+                }
+            }.await()
+        } catch (_: Exception) {}
+    }
+
+    suspend fun leaveRoom(code: String, me: Int) {
+        try {
+            val ref = db.collection("rooms").document(code)
+            db.runTransaction { t ->
+                val s = t.get(ref)
+                if (s.exists()) {
+                    val status = s.getString("status") ?: ""
+                    if (status == "playing" || status == "waiting" || status == "done") {
+                        t.update(ref, mapOf(
+                            "status" to "abandoned",
+                            "abandonedBy" to me
+                        ))
+                    }
+                }
+            }.await()
+        } catch (_: Exception) {}
     }
 
     fun listen(code: String): Flow<Room?> = callbackFlow {
@@ -121,6 +189,9 @@ object OnlineRepository {
         guestName = getString("guestName"),
         board = (get("board") as? List<Number>)?.map { it.toInt() } ?: emptyList(),
         turn = (getLong("turn") ?: 1L).toInt(), status = getString("status") ?: "waiting",
-        winner = (getLong("winner") ?: 0L).toInt()
+        winner = (getLong("winner") ?: 0L).toInt(),
+        rematch1 = getBoolean("rematch1") ?: false,
+        rematch2 = getBoolean("rematch2") ?: false,
+        round = (getLong("round") ?: 1L).toInt()
     )
 }
