@@ -54,14 +54,14 @@ fun LeaderboardScreen(onBack: () -> Unit) {
         }
     }
 
-    GameScaffold("Leaderboard", onBack) {
+    GameScaffold("Trophy Room 🏆", onBack) {
         // Quick Game Filter Bar
         LazyRow(
             horizontalArrangement = Arrangement.spacedBy(8.dp),
             modifier = Modifier.padding(bottom = 12.dp)
         ) {
             item {
-                Pill("🌍 Global (All Games)", sel == null, color = Sun) { sel = null }
+                Pill("🌍 Superstar Stars", sel == null, color = Sun) { sel = null }
             }
             // Put 2048 first right after Global for quick access!
             val g2048 = allGames.firstOrNull { it.id == "2048" }
@@ -80,40 +80,43 @@ fun LeaderboardScreen(onBack: () -> Unit) {
         val myIdx = list?.indexOfFirst { it.uid == me || it.name.contains("(you)", ignoreCase = true) } ?: -1
         val myScore = if (sel == null) ScoreRepository.getTotalPoints() else ScoreRepository.getLocalBest(sel ?: "").let { if (it > 0) it else ScoreRepository.getLocalWins(sel ?: "") }
 
+        val competitorAvatars = listOf("🦊", "🐼", "🦁", "🐯", "🦄", "🐶", "🐱", "🚀", "👾", "🐻", "🐸", "🐰")
+
         // Explanatory Banner Card for Main Leaderboard or Game Leaderboard
         CreamCard(Modifier.fillMaxWidth().padding(bottom = 12.dp)) {
             if (game == null) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    Text("🏆 GLOBAL HALL OF FAME", color = Ink, fontWeight = FontWeight.Black, fontSize = 16.sp)
+                    Text("🏆 SUPERSTAR TROPHY ROOM 🌟", color = Ink, fontWeight = FontWeight.Black, fontSize = 16.sp)
                     Spacer(Modifier.weight(1f))
                     Box(
-                        Modifier.clip(RoundedCornerShape(8.dp)).background(Sun).border(1.5.dp, Ink, RoundedCornerShape(8.dp)).padding(horizontal = 8.dp, vertical = 2.dp)
+                        Modifier.clip(RoundedCornerShape(10.dp)).background(Sun).border(1.5.dp, Ink, RoundedCornerShape(10.dp)).padding(horizontal = 8.dp, vertical = 2.dp)
                     ) {
                         Text(ScoreRepository.getTier(myScore), color = Ink, fontWeight = FontWeight.Black, fontSize = 11.sp)
                     }
                 }
                 Spacer(Modifier.height(4.dp))
                 Text(
-                    "What's shown here: Ranks players worldwide by Total Arcade Points (XP) earned across ALL 15 games.",
+                    "Ranks players by Total Superstar Stars collected across ALL 15 fun games! ✨",
                     color = Ink.copy(alpha = 0.85f),
                     fontWeight = FontWeight.Bold,
                     fontSize = 12.sp,
                     lineHeight = 16.sp
                 )
                 Text(
-                    "• Solo Games (2048, Snake...): High scores earn bonus XP\n• Bot Matches: +5 XP (Easy) · +10 XP (Medium) · +20 XP (Hard)\n• Multiplayer & Online: +15 to +25 XP per victory",
-                    color = Ink.copy(alpha = 0.7f),
+                    "• Solo Games (Snake, 2048...): High scores give bonus stars ⭐\n• Bot Buddies: +5 (Friendly) · +10 (Clever) · +20 (Mega Boss)\n• Multiplayer & Online: +15 to +25 stars per win 🎉",
+                    color = Ink.copy(alpha = 0.75f),
+                    fontWeight = FontWeight.SemiBold,
                     fontSize = 11.sp,
                     lineHeight = 15.sp,
                     modifier = Modifier.padding(top = 4.dp)
                 )
             } else {
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    Text("${game.emoji} ${game.title.uppercase()} LEADERBOARD", color = Ink, fontWeight = FontWeight.Black, fontSize = 16.sp)
+                    Text("${game.emoji} ${game.title.uppercase()} TROPHIES", color = Ink, fontWeight = FontWeight.Black, fontSize = 16.sp)
                     Spacer(Modifier.weight(1f))
                     if (game.id == "2048") {
                         Box(
-                            Modifier.clip(RoundedCornerShape(8.dp)).background(Tangerine).border(1.5.dp, Ink, RoundedCornerShape(8.dp)).padding(horizontal = 8.dp, vertical = 2.dp)
+                            Modifier.clip(RoundedCornerShape(10.dp)).background(Tangerine).border(1.5.dp, Ink, RoundedCornerShape(10.dp)).padding(horizontal = 8.dp, vertical = 2.dp)
                         ) {
                             Text("Top Tiles", color = Ink, fontWeight = FontWeight.Black, fontSize = 11.sp)
                         }
@@ -124,7 +127,8 @@ fun LeaderboardScreen(onBack: () -> Unit) {
                     if (game.id == "2048") "Ranked by highest score & tiles merged in a single run."
                     else if (game.category == Category.SINGLE) "Ranked by highest score achieved in a single match."
                     else "Ranked by total match victories.",
-                    color = Ink.copy(alpha = 0.8f),
+                    color = Ink.copy(alpha = 0.85f),
+                    fontWeight = FontWeight.Bold,
                     fontSize = 12.sp
                 )
             }
@@ -136,13 +140,13 @@ fun LeaderboardScreen(onBack: () -> Unit) {
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
                 Text(
-                    if (myIdx >= 0) "Your Rank: #${myIdx + 1}" else "Play to enter the leaderboard!",
+                    if (myIdx >= 0) "Your Superstar Rank: #${myIdx + 1} 🌟" else "Play games to earn shiny stars! 🎈",
                     color = Ink,
                     fontWeight = FontWeight.Black,
                     fontSize = 13.sp
                 )
                 Text(
-                    "Your Best: $myScore $unit",
+                    "Your Best: $myScore $unit ⭐",
                     color = Coral,
                     fontWeight = FontWeight.Black,
                     fontSize = 13.sp
@@ -165,14 +169,15 @@ fun LeaderboardScreen(onBack: () -> Unit) {
             ) {
                 itemsIndexed(list) { i, e ->
                     val isMine = e.uid == me || e.isLocal || e.name.contains("(you)", ignoreCase = true)
-                    val shape = RoundedCornerShape(16.dp)
+                    val shape = RoundedCornerShape(20.dp)
+                    val avatar = if (isMine) "⭐" else competitorAvatars[kotlin.math.abs(e.name.hashCode()) % competitorAvatars.size]
 
                     Box(
                         Modifier
                             .fillMaxWidth()
                             .clip(shape)
                             .background(if (isMine) Sun else Cream)
-                            .border(3.dp, Ink, shape)
+                            .border(3.2.dp, Ink, shape)
                             .padding(horizontal = 14.dp, vertical = 12.dp)
                     ) {
                         Row(verticalAlignment = Alignment.CenterVertically) {
@@ -193,13 +198,13 @@ fun LeaderboardScreen(onBack: () -> Unit) {
                             // Avatar Bubble
                             Box(
                                 Modifier
-                                    .size(34.dp)
+                                    .size(36.dp)
                                     .clip(CircleShape)
-                                    .background(if (isMine) Coral.copy(alpha = 0.3f) else Sky.copy(alpha = 0.3f))
+                                    .background(if (isMine) Coral.copy(alpha = 0.35f) else Sky.copy(alpha = 0.35f))
                                     .border(2.dp, Ink, CircleShape),
                                 contentAlignment = Alignment.Center
                             ) {
-                                Text(if (isMine) "👤" else "🎮", fontSize = 16.sp)
+                                Text(avatar, fontSize = 18.sp)
                             }
 
                             Spacer(Modifier.width(10.dp))
@@ -216,7 +221,7 @@ fun LeaderboardScreen(onBack: () -> Unit) {
                                 if (sel == null) {
                                     Text(
                                         ScoreRepository.getTier(e.score),
-                                        color = Ink.copy(alpha = 0.6f),
+                                        color = Ink.copy(alpha = 0.65f),
                                         fontSize = 11.sp,
                                         fontWeight = FontWeight.Bold
                                     )

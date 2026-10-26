@@ -43,12 +43,12 @@ object ScoreRepository {
         getPrefs()?.getLong("total_points", 0L) ?: 0L
 
     fun getTier(points: Long): String = when {
-        points >= 1000 -> "👑 Grandmaster"
-        points >= 500  -> "🏆 Champion"
-        points >= 250  -> "⭐ Pro Player"
-        points >= 100  -> "🎯 Arcade Veteran"
-        points >= 30   -> "🕹️ Contender"
-        else           -> "🌱 Rookie"
+        points >= 1000 -> "👑 Legend Superstar"
+        points >= 500  -> "🏆 Mega Champion"
+        points >= 250  -> "⭐ Star Hero"
+        points >= 100  -> "🚀 Super Gamer"
+        points >= 30   -> "🎈 Fun Explorer"
+        else           -> "🌱 Cute Rookie"
     }
 
     /** Keeps the player's best score for score-based games (2048, Snake, Flappy, etc.). */

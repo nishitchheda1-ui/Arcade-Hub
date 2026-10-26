@@ -62,14 +62,18 @@ private fun TttPlay(ps: List<PlayerCfg>, onExit: () -> Unit, onAgain: () -> Unit
     GameScaffold("Tic Tac Toe", onExit) {
         Spacer(Modifier.height(12.dp))
         Text(
-            when (result) { 0 -> "${ps[turn - 1].name}'s turn (${if (turn == 1) "X" else "O"})"; 3 -> "Draw!"; else -> "${ps[result - 1].name} wins!" },
-            color = Color.White, fontSize = 20.sp, fontWeight = FontWeight.Bold
+            when (result) {
+                0 -> "${ps[turn - 1].name}'s turn (${if (turn == 1) "X 🔷" else "O 🔴"})"
+                3 -> "It's a Draw! 🤝"
+                else -> "🎉 ${ps[result - 1].name} wins! 🏆"
+            },
+            color = Color.White, fontSize = 20.sp, fontWeight = FontWeight.Black
         )
         Spacer(Modifier.height(16.dp))
         TttBoard(board, { if (bot == null || turn == 1) play(it) })
         if (result != 0) EndPanel(
-            when { result == 3 -> "Draw"; result == 1 -> if (bot != null) "You win!" else "Player 1 wins!"; else -> if (bot != null) "Bot wins" else "Player 2 wins!" },
-            if (bot != null) "Difficulty: ${bot.label}" else "Good game!", onAgain, onExit
+            when { result == 3 -> "Great Match! It's a draw!"; result == 1 -> if (bot != null) "Woohoo! You Won! 🎉" else "Player 1 Wins! 🏆"; else -> if (bot != null) "Bot Won! Good try! 🎈" else "Player 2 Wins! 🏆" },
+            if (bot != null) "Bot: ${bot.label}" else "Awesome game!", onAgain, onExit
         )
     }
 }
@@ -115,15 +119,15 @@ private fun C4Play(ps: List<PlayerCfg>, onExit: () -> Unit, onAgain: () -> Unit)
         Spacer(Modifier.height(12.dp))
         Text(
             when (result) {
-                0 -> if (thinking) "Bot is thinking..." else "${ps[turn - 1].name}'s turn (${if (turn == 1) "red" else "yellow"})"
-                3 -> "Draw!"; else -> "${ps[result - 1].name} wins!"
-            }, color = Color.White, fontSize = 20.sp, fontWeight = FontWeight.Bold
+                0 -> if (thinking) "Bot buddy is thinking... 🤔" else "${ps[turn - 1].name}'s turn (${if (turn == 1) "Red 🔴" else "Yellow 🟡"})"
+                3 -> "It's a Draw! 🤝"; else -> "🎉 ${ps[result - 1].name} wins! 🏆"
+            }, color = Color.White, fontSize = 20.sp, fontWeight = FontWeight.Black
         )
         Spacer(Modifier.height(16.dp))
         C4Board(board, { if (!thinking && (bot == null || turn == 1)) play(it) })
         if (result != 0) EndPanel(
-            when { result == 3 -> "Draw"; result == 1 -> if (bot != null) "You win!" else "Player 1 wins!"; else -> if (bot != null) "Bot wins" else "Player 2 wins!" },
-            if (bot != null) "Difficulty: ${bot.label}" else "Good game!", onAgain, onExit
+            when { result == 3 -> "Great Match! It's a draw!"; result == 1 -> if (bot != null) "Woohoo! You Won! 🎉" else "Player 1 Wins! 🏆"; else -> if (bot != null) "Bot Won! Good try! 🎈" else "Player 2 Wins! 🏆" },
+            if (bot != null) "Bot: ${bot.label}" else "Awesome game!", onAgain, onExit
         )
     }
 }
@@ -141,6 +145,7 @@ fun RpsGame(onExit: () -> Unit) {
 @Composable
 private fun RpsPlay(d: Difficulty, onExit: () -> Unit, onAgain: () -> Unit) {
     val icons = listOf("✊", "✋", "✌️")
+    val labels = listOf("Rock 🪨", "Paper 📄", "Scissors ✂️")
     val history = remember { mutableListOf<Int>() }
     var you by remember { mutableIntStateOf(0) }
     var botScore by remember { mutableIntStateOf(0) }
@@ -167,29 +172,55 @@ private fun RpsPlay(d: Difficulty, onExit: () -> Unit, onAgain: () -> Unit) {
     }
 
     GameScaffold("Rock Paper Scissors", onExit) {
-        Text("First to 5 wins  ·  Bot: ${d.label}", color = Color.White.copy(alpha = 0.7f))
-        Spacer(Modifier.height(16.dp))
+        Text("First to 5 wins  ·  Bot Buddy: ${d.label} 🤖", color = Color.White.copy(alpha = 0.85f), fontWeight = FontWeight.Bold)
+        Spacer(Modifier.height(14.dp))
         Row(horizontalArrangement = Arrangement.spacedBy(32.dp)) {
-            Text("You: $you", color = Sun, fontSize = 24.sp, fontWeight = FontWeight.Black)
+            Text("You: $you ⭐", color = Sun, fontSize = 24.sp, fontWeight = FontWeight.Black)
             Text("Bot: $botScore", color = Coral, fontSize = 24.sp, fontWeight = FontWeight.Black)
         }
-        Spacer(Modifier.height(24.dp))
+        Spacer(Modifier.height(20.dp))
         last?.let { (m, b) ->
             Row(horizontalArrangement = Arrangement.spacedBy(24.dp), verticalAlignment = Alignment.CenterVertically) {
-                Text(icons[m], fontSize = 70.sp); Text("vs", color = Color.White); Text(icons[b], fontSize = 70.sp)
+                Text(icons[m], fontSize = 68.sp); Text("VS", color = Color.White, fontWeight = FontWeight.Black, fontSize = 20.sp); Text(icons[b], fontSize = 68.sp)
             }
-            Text(if (m == b) "Draw" else if ((m - b + 3) % 3 == 1) "You win the round" else "Bot wins the round", color = Leaf, fontWeight = FontWeight.Bold)
+            Spacer(Modifier.height(6.dp))
+            Text(
+                if (m == b) "It's a tie round! 🤝" else if ((m - b + 3) % 3 == 1) "🎉 You won this round! Woohoo!" else "🤖 Bot got this round! Keep going!",
+                color = Leaf,
+                fontWeight = FontWeight.Black,
+                fontSize = 15.sp
+            )
         }
-        Spacer(Modifier.height(24.dp))
+        Spacer(Modifier.height(20.dp))
         if (you < 5 && botScore < 5) {
             Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                 icons.forEachIndexed { i, ic ->
-                    Box(
-                        Modifier.size(90.dp).background(Cream, RoundedCornerShape(20.dp)).border(4.dp, Ink, RoundedCornerShape(20.dp)).clickable { play(i) },
-                        contentAlignment = Alignment.Center
-                    ) { Text(ic, fontSize = 44.sp) }
+                    val shape = RoundedCornerShape(22.dp)
+                    Box(Modifier.size(98.dp)) {
+                        Box(Modifier.fillMaxSize().padding(top = 5.dp).background(Ink, shape))
+                        Column(
+                            Modifier
+                                .fillMaxSize()
+                                .padding(bottom = 5.dp)
+                                .clip(shape)
+                                .background(Cream)
+                                .border(3.2.dp, Ink, shape)
+                                .clickable { play(i) },
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            verticalArrangement = Arrangement.Center
+                        ) {
+                            Text(ic, fontSize = 40.sp)
+                            Spacer(Modifier.height(2.dp))
+                            Text(labels[i], color = Ink, fontWeight = FontWeight.Black, fontSize = 11.sp)
+                        }
+                    }
                 }
             }
-        } else EndPanel(if (you == 5) "You win the match!" else "Bot wins the match", "$you - $botScore", onAgain, onExit)
+        } else EndPanel(
+            if (you == 5) "🎉 You Beat the Bot! Champion! 🏆" else "🎈 Good Try! Bot Won the Match!",
+            "$you - $botScore",
+            onAgain,
+            onExit
+        )
     }
 }

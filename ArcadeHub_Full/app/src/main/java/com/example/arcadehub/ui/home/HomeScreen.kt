@@ -1,6 +1,9 @@
 package com.example.arcadehub.ui.home
 
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.*
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.grid.*
@@ -14,6 +17,8 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.scale
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -24,6 +29,7 @@ import com.example.arcadehub.model.Game
 import com.example.arcadehub.model.allGames
 import com.example.arcadehub.ui.components.*
 import com.example.arcadehub.ui.theme.*
+import kotlin.math.abs
 
 @Composable
 fun HomeScreen(
@@ -37,71 +43,107 @@ fun HomeScreen(
     val totalPoints = ScoreRepository.getTotalPoints()
     val tier = ScoreRepository.getTier(totalPoints)
 
+    val kidAvatars = listOf("🦁", "🦊", "🐼", "🦄", "🐯", "🐶", "🐱", "🚀", "👾", "🐻")
+    val myAvatar = kidAvatars[abs(username.hashCode()) % kidAvatars.size]
+
     ArcadeBackground {
         Column(Modifier.fillMaxSize().statusBarsPadding()) {
             // Header Bar
             Row(
                 Modifier
                     .fillMaxWidth()
-                    .padding(start = 18.dp, end = 14.dp, top = 12.dp, bottom = 6.dp),
+                    .padding(start = 16.dp, end = 14.dp, top = 10.dp, bottom = 4.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
+                // Kid Avatar Bubble
+                Box(
+                    Modifier
+                        .size(46.dp)
+                        .clip(CircleShape)
+                        .background(Sun)
+                        .border(2.5.dp, Ink, CircleShape)
+                        .clickable(onClick = onLeaderboard),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(myAvatar, fontSize = 24.sp)
+                }
+
+                Spacer(Modifier.width(10.dp))
+
                 Column(Modifier.weight(1f)) {
-                    OutlinedTitle("ARCADE HUB", 26.sp)
-                    Spacer(Modifier.height(4.dp))
+                    OutlinedTitle("ARCADE HUB", 24.sp)
+                    Spacer(Modifier.height(2.dp))
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Text(
-                            "Hi, $username 👋",
+                            "Hi, $username! 🎈",
                             color = Color.White,
-                            fontWeight = FontWeight.Bold,
-                            fontSize = 15.sp,
+                            fontWeight = FontWeight.Black,
+                            fontSize = 14.sp,
                             maxLines = 1
                         )
                         Spacer(Modifier.width(8.dp))
-                        // Arcade Level Pill
+                        // Shiny Star XP Pill
                         Box(
                             Modifier
-                                .clip(RoundedCornerShape(8.dp))
+                                .clip(RoundedCornerShape(10.dp))
                                 .background(Sun)
-                                .border(1.5.dp, Ink, RoundedCornerShape(8.dp))
+                                .border(1.5.dp, Ink, RoundedCornerShape(10.dp))
                                 .clickable(onClick = onLeaderboard)
-                                .padding(horizontal = 6.dp, vertical = 2.dp)
+                                .padding(horizontal = 7.dp, vertical = 2.dp)
                         ) {
-                            Text("$totalPoints pts", color = Ink, fontWeight = FontWeight.Black, fontSize = 11.sp)
+                            Text("⭐ $totalPoints Stars", color = Ink, fontWeight = FontWeight.Black, fontSize = 11.sp)
                         }
                     }
                 }
 
                 // Leaderboard Trophy Button
-                SquareButton(Icons.Default.EmojiEvents, onLeaderboard, color = Sun, desc = "Leaderboard")
+                SquareButton(Icons.Default.EmojiEvents, onLeaderboard, color = Sun, desc = "Trophy Room")
                 Spacer(Modifier.width(8.dp))
                 // Logout Button
                 SquareButton(Icons.AutoMirrored.Filled.Logout, onLogout, color = Coral, desc = "Log out")
             }
 
+            // Cheerful Banner Pill
+            Box(
+                Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp, vertical = 4.dp)
+                    .clip(RoundedCornerShape(16.dp))
+                    .background(Color.White.copy(alpha = 0.08f))
+                    .border(1.5.dp, Color.White.copy(alpha = 0.15f), RoundedCornerShape(16.dp))
+                    .padding(horizontal = 12.dp, vertical = 6.dp)
+            ) {
+                Text(
+                    "🌈 Pick a game & have fun! Beat records & collect stars! ✨",
+                    color = Color.White.copy(alpha = 0.9f),
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 12.sp
+                )
+            }
+
             // Category Filter Pills
             LazyRow(
-                contentPadding = PaddingValues(horizontal = 18.dp, vertical = 8.dp),
+                contentPadding = PaddingValues(horizontal = 16.dp, vertical = 6.dp),
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 item {
                     Pill("🌟 All (15)", filter == null, color = Sun) { filter = null }
                 }
                 item {
-                    Pill("🕹️ Solo", filter == Category.SINGLE, color = Sky) { filter = Category.SINGLE }
+                    Pill("🕹️ Solo Fun", filter == Category.SINGLE, color = Sky) { filter = Category.SINGLE }
                 }
                 item {
-                    Pill("🤖 vs Bot", filter == Category.BOT, color = Leaf) { filter = Category.BOT }
+                    Pill("🤖 Bot Buddies", filter == Category.BOT, color = Leaf) { filter = Category.BOT }
                 }
                 item {
-                    Pill("👥 Multiplayer", filter == Category.MULTI, color = Tangerine) { filter = Category.MULTI }
+                    Pill("👥 Party Games", filter == Category.MULTI, color = Tangerine) { filter = Category.MULTI }
                 }
             }
 
             // Game Cards Grid
             LazyVerticalGrid(
                 columns = GridCells.Fixed(2),
-                contentPadding = PaddingValues(start = 18.dp, end = 18.dp, top = 8.dp, bottom = 28.dp),
+                contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 6.dp, bottom = 28.dp),
                 horizontalArrangement = Arrangement.spacedBy(14.dp),
                 verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
@@ -113,18 +155,33 @@ fun HomeScreen(
     }
 }
 
+private fun gameCardGradient(base: Color): Brush {
+    val dark = Color(
+        red = (base.red * 0.85f).coerceIn(0f, 1f),
+        green = (base.green * 0.85f).coerceIn(0f, 1f),
+        blue = (base.blue * 0.85f).coerceIn(0f, 1f),
+        alpha = 1f
+    )
+    return Brush.verticalGradient(listOf(base, dark))
+}
+
 @Composable
 private fun GameCard(game: Game, onClick: () -> Unit) {
-    val shape = RoundedCornerShape(22.dp)
+    val shape = RoundedCornerShape(24.dp)
     val bestScore = ScoreRepository.getLocalBest(game.id)
     val wins = ScoreRepository.getLocalWins(game.id)
+
+    val src = remember { MutableInteractionSource() }
+    val isPressed by src.collectIsPressedAsState()
+    val scale by animateFloatAsState(if (isPressed) 0.95f else 1f, label = "cardScale")
 
     Box(
         Modifier
             .fillMaxWidth()
             .aspectRatio(0.92f)
+            .scale(scale)
     ) {
-        // Drop shadow outline
+        // Drop shadow base
         Box(
             Modifier
                 .fillMaxSize()
@@ -132,65 +189,97 @@ private fun GameCard(game: Game, onClick: () -> Unit) {
                 .background(Ink, shape)
         )
         // Main card body
-        Column(
+        Box(
             Modifier
                 .fillMaxSize()
                 .padding(bottom = 6.dp)
                 .clip(shape)
-                .background(game.color)
-                .border(3.dp, Ink, shape)
-                .clickable(onClick = onClick)
-                .padding(12.dp),
-            verticalArrangement = Arrangement.SpaceBetween
+                .background(gameCardGradient(game.color))
+                .border(3.2.dp, Ink, shape)
+                .clickable(interactionSource = src, indication = null, onClick = onClick)
         ) {
-            Row(
-                Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.Top
-            ) {
-                Text(game.emoji, fontSize = 42.sp)
+            // Top gloss highlight
+            Box(
+                Modifier
+                    .fillMaxWidth()
+                    .fillMaxHeight(0.42f)
+                    .background(
+                        Brush.verticalGradient(
+                            listOf(
+                                Color.White.copy(alpha = 0.35f),
+                                Color.White.copy(alpha = 0.05f),
+                                Color.Transparent
+                            )
+                        )
+                    )
+            )
 
-                // High score badge or player tag
-                val badgeText = when {
-                    game.category == Category.SINGLE && bestScore > 0 -> "★ $bestScore"
-                    game.category != Category.SINGLE && wins > 0 -> "🏆 $wins W"
-                    game.category == Category.SINGLE -> "1P"
-                    game.category == Category.BOT -> "vs Bot"
-                    else -> "2-4P"
+            Column(
+                Modifier
+                    .fillMaxSize()
+                    .padding(12.dp),
+                verticalArrangement = Arrangement.SpaceBetween
+            ) {
+                Row(
+                    Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.Top
+                ) {
+                    // Toy Emoji Bubble
+                    Box(
+                        Modifier
+                            .size(50.dp)
+                            .clip(CircleShape)
+                            .background(Cream)
+                            .border(2.5.dp, Ink, CircleShape),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(game.emoji, fontSize = 28.sp)
+                    }
+
+                    // High score badge or player tag
+                    val badgeText = when {
+                        game.category == Category.SINGLE && bestScore > 0 -> "⭐ $bestScore"
+                        game.category != Category.SINGLE && wins > 0 -> "🏆 $wins W"
+                        game.category == Category.SINGLE -> "✨ 1P"
+                        game.category == Category.BOT -> "🤖 vs Bot"
+                        else -> "🎉 2-4P"
+                    }
+
+                    Box(
+                        Modifier
+                            .clip(RoundedCornerShape(10.dp))
+                            .background(Cream)
+                            .border(2.dp, Ink, RoundedCornerShape(10.dp))
+                            .padding(horizontal = 8.dp, vertical = 3.dp)
+                    ) {
+                        Text(
+                            badgeText,
+                            color = Ink,
+                            fontWeight = FontWeight.Black,
+                            fontSize = 11.sp
+                        )
+                    }
                 }
 
-                Box(
-                    Modifier
-                        .clip(RoundedCornerShape(8.dp))
-                        .background(Ink.copy(alpha = 0.15f))
-                        .border(1.5.dp, Ink.copy(alpha = 0.4f), RoundedCornerShape(8.dp))
-                        .padding(horizontal = 7.dp, vertical = 2.dp)
-                ) {
+                Column {
                     Text(
-                        badgeText,
+                        game.title,
                         color = Ink,
                         fontWeight = FontWeight.Black,
-                        fontSize = 10.sp
+                        fontSize = 16.sp,
+                        lineHeight = 18.sp,
+                        maxLines = 1
+                    )
+                    Spacer(Modifier.height(1.dp))
+                    Text(
+                        game.subtitle,
+                        color = Ink.copy(alpha = 0.85f),
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 11.sp,
+                        maxLines = 1
                     )
                 }
-            }
-
-            Column {
-                Text(
-                    game.title,
-                    color = Ink,
-                    fontWeight = FontWeight.Black,
-                    fontSize = 16.sp,
-                    lineHeight = 18.sp,
-                    maxLines = 1
-                )
-                Text(
-                    game.subtitle,
-                    color = Ink.copy(alpha = 0.75f),
-                    fontWeight = FontWeight.SemiBold,
-                    fontSize = 11.sp,
-                    maxLines = 1
-                )
             }
         }
     }

@@ -45,8 +45,14 @@ fun SplashScreen(onFinished: () -> Unit) {
     ArcadeBackground {
         Column(Modifier.align(Alignment.Center), horizontalAlignment = Alignment.CenterHorizontally) {
             Image(painterResource(R.drawable.ic_logo), null, Modifier.size(200.dp).scale(pop.value))
-            OutlinedTitle("ARCADE HUB", 40.sp, Modifier.alpha(fade.value))
-            Text("15 games. One leaderboard.", color = Color.White, fontWeight = FontWeight.Bold, modifier = Modifier.alpha(fade.value).padding(top = 10.dp))
+            OutlinedTitle("ARCADE HUB", 42.sp, Modifier.alpha(fade.value))
+            Text(
+                "Where Fun Never Stops! 🎈🎮",
+                color = Color.White,
+                fontWeight = FontWeight.Black,
+                fontSize = 15.sp,
+                modifier = Modifier.alpha(fade.value).padding(top = 10.dp)
+            )
         }
     }
 }

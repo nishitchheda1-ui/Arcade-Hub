@@ -68,23 +68,29 @@ fun MemoryGame(onExit: () -> Unit) {
     }
 
     GameScaffold("Memory Match", onExit) {
-        Text("Moves: $moves   Time: ${secs}s", color = Coral, fontSize = 18.sp, fontWeight = FontWeight.Bold)
+        Text("Moves: $moves   Time: ${secs}s ⭐", color = Coral, fontSize = 18.sp, fontWeight = FontWeight.Black)
         Spacer(Modifier.height(14.dp))
         Column(Modifier.fillMaxWidth().aspectRatio(1f), verticalArrangement = Arrangement.spacedBy(8.dp)) {
             for (r in 0..3) Row(Modifier.weight(1f), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 for (c in 0..3) {
-                    val i = r * 4 + c; val card = cards[i]
-                    Box(
-                        Modifier.weight(1f).fillMaxHeight()
-                            .background(if (card.up || card.done) Cream else Grape, RoundedCornerShape(12.dp))
-                            .border(3.dp, if (card.done) Leaf else Ink, RoundedCornerShape(12.dp))
-                            .clickable { tap(i) },
-                        contentAlignment = Alignment.Center
-                    ) { Text(if (card.up || card.done) card.e else "?", fontSize = 34.sp, color = Color.White) }
+                    val i = r * 4 + c
+                    val card = cards[i]
+                    val shape = RoundedCornerShape(16.dp)
+                    Box(Modifier.weight(1f).fillMaxHeight()) {
+                        Box(Modifier.fillMaxSize().padding(top = 4.dp).background(Ink, shape))
+                        Box(
+                            Modifier.fillMaxSize().padding(bottom = 4.dp)
+                                .clip(shape)
+                                .background(if (card.up || card.done) Cream else Grape)
+                                .border(3.dp, if (card.done) Leaf else Ink, shape)
+                                .clickable { tap(i) },
+                            contentAlignment = Alignment.Center
+                        ) { Text(if (card.up || card.done) card.e else "⭐", fontSize = 34.sp, color = if (card.up || card.done) Ink else Sun) }
+                    }
                 }
             }
         }
-        if (won) EndPanel("You won!", "Score: ${score()}  ($moves moves, ${secs}s)", { reset() }, onExit)
+        if (won) EndPanel("Pairs Matched! Woohoo! 🃏🎉", "Score: ${score()}  ($moves moves, ${secs}s) ⭐", { reset() }, onExit)
     }
 }
 
@@ -244,9 +250,9 @@ fun BreakoutGame(onExit: () -> Unit) {
                 drawCircle(Color.White, 8f * s, Offset(bx * s, ballY * s))
                 drawFrame()
             }
-            if (!started && !over) Text("TAP TO LAUNCH\nDrag to move", color = Color.White, textAlign = TextAlign.Center, fontWeight = FontWeight.Bold)
+            if (!started && !over) Text("TAP TO LAUNCH BALL! 🚀\nDrag paddle to bounce", color = Color.White, textAlign = TextAlign.Center, fontWeight = FontWeight.Black)
         }
-        if (over) EndPanel("Game Over", "Score: $score", { reset() }, onExit)
+        if (over) EndPanel("Oops! Out of Balls! 🧱", "Score: $score  •  Level: $level ⭐", { reset() }, onExit)
     }
 }
 
@@ -271,7 +277,7 @@ fun WhackGame(onExit: () -> Unit) {
     }
 
     GameScaffold("Whack-a-Mole", onExit) {
-        Text("Score: $score     Time: $time", color = Leaf, fontSize = 20.sp, fontWeight = FontWeight.Black)
+        Text("Moles Whacked: $score 🔨    Time: ${time}s", color = Sun, fontSize = 20.sp, fontWeight = FontWeight.Black)
         Spacer(Modifier.height(16.dp))
         Column(
             Modifier.fillMaxWidth().aspectRatio(1f).background(Color(0xFF7BC96F), RoundedCornerShape(20.dp)).border(4.dp, Ink, RoundedCornerShape(20.dp)).padding(14.dp),
@@ -289,6 +295,6 @@ fun WhackGame(onExit: () -> Unit) {
                 }
             }
         }
-        if (time == 0) EndPanel("Time's up!", "You whacked $score moles", { score = 0; time = 30; mole = -1; run++ }, onExit)
+        if (time == 0) EndPanel("Time's Up! Super Whacking! 🐹", "You whacked $score cheeky moles! ⭐", { score = 0; time = 30; mole = -1; run++ }, onExit)
     }
 }

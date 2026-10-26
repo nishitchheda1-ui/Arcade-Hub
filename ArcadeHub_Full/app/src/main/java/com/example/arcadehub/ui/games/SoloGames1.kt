@@ -59,11 +59,11 @@ fun SnakeGame(onExit: () -> Unit) {
     DisposableEffect(Unit) { onDispose { if (!over && score > 0) ScoreRepository.submitBest("snake", score) } }
 
     GameScaffold("Snake", onExit) {
-        Text("Score: $score", color = Leaf, fontSize = 20.sp, fontWeight = FontWeight.Bold)
-        Text("Swipe to steer", color = Color.White.copy(alpha = 0.6f), fontSize = 12.sp)
+        Text("Apples Munched: $score 🍎", color = Sun, fontSize = 20.sp, fontWeight = FontWeight.Black)
+        Text("Swipe anywhere to steer your snake! 🐍", color = Color.White.copy(alpha = 0.85f), fontSize = 12.sp, fontWeight = FontWeight.Bold)
         Spacer(Modifier.height(10.dp))
         Canvas(
-            Modifier.fillMaxWidth().aspectRatio(1f).clip(RoundedCornerShape(14.dp)).pointerInput(Unit) {
+            Modifier.fillMaxWidth().aspectRatio(1f).clip(RoundedCornerShape(16.dp)).pointerInput(Unit) {
                 var ax = 0f; var ay = 0f
                 detectDragGestures(onDragStart = { ax = 0f; ay = 0f }, onDrag = { c, d ->
                     c.consume(); ax += d.x; ay += d.y
@@ -85,7 +85,7 @@ fun SnakeGame(onExit: () -> Unit) {
             }
             drawFrame()
         }
-        if (over) EndPanel("Game Over", "Score: $score", { reset() }, onExit)
+        if (over) EndPanel("Oops! Bumped! 🐍", "You munched $score yummy apples! 🍎", { reset() }, onExit)
     }
 }
 
@@ -145,9 +145,9 @@ fun FlappyGame(onExit: () -> Unit) {
                 drawCircle(Coral, 4f * s, Offset(114f * s, (birdY + 3f) * s))
                 drawFrame()
             }
-            if (!started) Text("TAP TO FLY", color = Color.White, fontWeight = FontWeight.Black, fontSize = 22.sp)
+            if (!started) Text("TAP TO FLAP WINGS! 🪽", color = Color.White, fontWeight = FontWeight.Black, fontSize = 20.sp)
         }
-        if (over) EndPanel("Crashed!", "Score: $score", { reset() }, onExit)
+        if (over) EndPanel("Oops! Soft Landing! 🐦", "You flew past $score obstacles! ⭐", { reset() }, onExit)
     }
 }
 
@@ -269,6 +269,6 @@ fun Game2048(onExit: () -> Unit) {
                 }
             }
         }
-        if (over) EndPanel("No more moves", "Score: $score  •  Best: $localBest", { board = fresh(); score = 0; over = false }, onExit)
+        if (over) EndPanel("Board Full! Awesome Run! 🔢", "Score: $score  •  Best: $localBest ⭐", { board = fresh(); score = 0; over = false }, onExit)
     }
 }

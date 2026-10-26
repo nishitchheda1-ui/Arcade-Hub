@@ -52,33 +52,35 @@ fun AuthScreen(
             Spacer(Modifier.height(4.dp))
             OutlinedTitle("ARCADE HUB", 34.sp)
             Text(
-                "15 Games • Play Solo or with Friends",
-                color = Color.White.copy(alpha = 0.85f),
+                "15 Super Fun Games • Play Solo or with Friends! 🌈🎈",
+                color = Color.White.copy(alpha = 0.9f),
                 fontWeight = FontWeight.Bold,
                 fontSize = 13.sp,
+                textAlign = TextAlign.Center,
                 modifier = Modifier.padding(top = 4.dp, bottom = 20.dp)
             )
 
             // Instant Play as Guest Card (Zero wait time, zero signup lag!)
             CreamCard(Modifier.fillMaxWidth().padding(bottom = 18.dp)) {
                 Text(
-                    "⚡ QUICK OFFLINE PLAY",
+                    "🚀 QUICK PLAY (NO LOGIN NEEDED!)",
                     color = Ink,
                     fontWeight = FontWeight.Black,
                     fontSize = 15.sp
                 )
                 Text(
-                    "Jump straight into any game immediately with zero signup wait time. Your best scores are saved locally!",
-                    color = Ink.copy(alpha = 0.7f),
+                    "Jump straight into any game! No password needed. Your best scores & stars are saved right here on your device! ⭐",
+                    color = Ink.copy(alpha = 0.75f),
+                    fontWeight = FontWeight.SemiBold,
                     fontSize = 12.sp,
                     lineHeight = 16.sp,
-                    modifier = Modifier.padding(top = 2.dp, bottom = 10.dp)
+                    modifier = Modifier.padding(top = 3.dp, bottom = 12.dp)
                 )
                 GameButton(
-                    text = "🎮 PLAY AS GUEST",
+                    text = "🎮 START PLAYING NOW!",
                     onClick = {
                         if (onGuestPlay != null) onGuestPlay()
-                        else vm.playAsGuest(username.ifBlank { "Guest Player" }, onAuthenticated)
+                        else vm.playAsGuest(username.ifBlank { "Guest Hero" }, onAuthenticated)
                     },
                     modifier = Modifier.fillMaxWidth(),
                     color = Leaf,
@@ -91,28 +93,28 @@ fun AuthScreen(
                 Modifier.fillMaxWidth().padding(vertical = 10.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                HorizontalDivider(Modifier.weight(1f), color = Color.White.copy(alpha = 0.2f))
+                HorizontalDivider(Modifier.weight(1f), color = Color.White.copy(alpha = 0.25f))
                 Text(
-                    " OR CLOUD ACCOUNT ",
-                    color = Color.White.copy(alpha = 0.65f),
+                    " ✨ OR SAVE STARS ONLINE ✨ ",
+                    color = Color.White.copy(alpha = 0.8f),
                     fontWeight = FontWeight.Black,
                     fontSize = 11.sp
                 )
-                HorizontalDivider(Modifier.weight(1f), color = Color.White.copy(alpha = 0.2f))
+                HorizontalDivider(Modifier.weight(1f), color = Color.White.copy(alpha = 0.25f))
             }
 
             AnimatedVisibility(isSignUp) {
                 Column {
-                    GameTextField(username, { username = it; vm.clearError() }, "Player Username", Icons.Default.Person)
+                    GameTextField(username, { username = it; vm.clearError() }, "Player Nickname 👤", Icons.Default.Person)
                     Spacer(Modifier.height(12.dp))
                 }
             }
-            GameTextField(email, { email = it; vm.clearError() }, "Email", Icons.Default.Email, keyboardType = KeyboardType.Email)
+            GameTextField(email, { email = it; vm.clearError() }, "Secret Email ✉️", Icons.Default.Email, keyboardType = KeyboardType.Email)
             Spacer(Modifier.height(12.dp))
-            GameTextField(password, { password = it; vm.clearError() }, "Password", Icons.Default.Lock, isPassword = true)
+            GameTextField(password, { password = it; vm.clearError() }, "Secret Password 🔑", Icons.Default.Lock, isPassword = true)
 
             state.error?.let {
-                val shape = RoundedCornerShape(14.dp)
+                val shape = RoundedCornerShape(16.dp)
                 Text(
                     it,
                     color = Ink,
@@ -130,7 +132,7 @@ fun AuthScreen(
 
             Spacer(Modifier.height(18.dp))
             GameButton(
-                text = if (isSignUp) "CREATE ACCOUNT" else "LOG IN",
+                text = if (isSignUp) "CREATE MY HERO ACCOUNT ⭐" else "LET'S PLAY! 🚀",
                 onClick = {
                     if (isSignUp) vm.signUp(username, email, password, onAuthenticated)
                     else vm.login(email, password, onAuthenticated)
@@ -141,7 +143,7 @@ fun AuthScreen(
             )
 
             Text(
-                if (isSignUp) "Already have an account? Log in" else "New player? Create an account",
+                if (isSignUp) "Already have an account? Log in here! 🎈" else "New superstar? Create an account! 🌟",
                 color = Sun,
                 fontWeight = FontWeight.Black,
                 fontSize = 14.sp,

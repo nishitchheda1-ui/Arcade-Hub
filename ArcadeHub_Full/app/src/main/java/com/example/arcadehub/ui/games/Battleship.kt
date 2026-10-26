@@ -122,24 +122,24 @@ private fun BattleshipPlay(d: Difficulty, onExit: () -> Unit, onAgain: () -> Uni
         }
     }
 
-    GameScaffold("Battleship (${d.label})", onExit) {
-        Text(msg, color = Leaf, fontWeight = FontWeight.Bold)
+    GameScaffold("Battleship (${d.label} Bot 🤖)", onExit) {
+        Text(msg, color = Leaf, fontWeight = FontWeight.Black, fontSize = 16.sp)
         Spacer(Modifier.height(8.dp))
         if (phase == 0) {
-            Text("Your fleet", color = Color.White)
+            Text("Your friendly fleet 🚢", color = Color.White, fontWeight = FontWeight.Bold)
             BattleGrid(shotsAtMe, myShips, null, Modifier.fillMaxWidth(0.9f))
             Spacer(Modifier.height(16.dp))
             Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                GameButton("SHUFFLE", { myShips = randomFleet() }, Modifier.weight(1f), color = Coral)
-                GameButton("START", { phase = 1; msg = "Your move - tap the enemy waters" }, Modifier.weight(1f))
+                GameButton("SHUFFLE 🔀", { myShips = randomFleet() }, Modifier.weight(1f), color = Coral)
+                GameButton("START! 🚢", { phase = 1; msg = "Your turn! Tap enemy waters 🌊" }, Modifier.weight(1f))
             }
         } else {
-            Text(if (myTurn && phase == 1) "ENEMY WATERS - your shot" else "ENEMY WATERS", color = Coral, fontSize = 12.sp)
+            Text(if (myTurn && phase == 1) "ENEMY WATERS - Your turn! 🎯" else "ENEMY WATERS", color = Coral, fontWeight = FontWeight.Bold, fontSize = 13.sp)
             BattleGrid(myShots, if (phase == 2) enemyShips else null, { fire(it) }, Modifier.fillMaxWidth(0.95f))
             Spacer(Modifier.height(8.dp))
-            Text("YOUR FLEET", color = Sun, fontSize = 12.sp)
+            Text("YOUR FLEET", color = Sun, fontWeight = FontWeight.Bold, fontSize = 12.sp)
             BattleGrid(shotsAtMe, myShips, null, Modifier.fillMaxWidth(0.5f))
-            if (phase == 2) EndPanel(if (won) "Victory!" else "Defeat", if (won) "You sunk the enemy fleet" else "Your fleet was sunk", onAgain, onExit)
+            if (phase == 2) EndPanel(if (won) "Fleet Victory! 🚢🏆" else "Good Try, Captain! 🌊", if (won) "You found all the hidden ships! ⭐" else "Your fleet was found! Ready for rematch?", onAgain, onExit)
         }
     }
 }

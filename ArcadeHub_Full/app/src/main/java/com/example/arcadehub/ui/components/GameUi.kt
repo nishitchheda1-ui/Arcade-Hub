@@ -33,14 +33,14 @@ val PLAYER_COLORS = listOf(Sun, Coral, Leaf, Sky)
 
 private fun Difficulty.avatar() = when (this) {
     Difficulty.EASY -> "🤖"
-    Difficulty.MEDIUM -> "🧠"
+    Difficulty.MEDIUM -> "🦊"
     Difficulty.HARD -> "⚡"
 }
 
 private fun Difficulty.subtitle() = when (this) {
-    Difficulty.EASY -> "Casual & relaxed • Makes frequent blunders"
-    Difficulty.MEDIUM -> "Tactical & clever • Anticipates your moves"
-    Difficulty.HARD -> "Grandmaster AI • Unbeatable minimax logic"
+    Difficulty.EASY -> "Friendly & cheerful • Loves to play and gives easy wins! 😊"
+    Difficulty.MEDIUM -> "Clever & tricky • Thinks ahead with smart moves! 🎯"
+    Difficulty.HARD -> "Mega Boss Bot • Super grandmaster arcade champion! 👑"
 }
 
 private fun Difficulty.cardColor() = when (this) {
@@ -71,12 +71,40 @@ fun GameScaffold(title: String, onBack: () -> Unit, content: @Composable ColumnS
 
 @Composable
 fun EndPanel(title: String, subtitle: String, onAgain: () -> Unit, onExit: () -> Unit) {
+    val isWin = title.contains("win", ignoreCase = true) || title.contains("won", ignoreCase = true) || title.contains("victory", ignoreCase = true)
+    val celebratoryEmoji = if (isWin) "🎉" else "⭐"
+
     CreamCard(Modifier.fillMaxWidth().padding(top = 16.dp)) {
-        Text(title, fontSize = 26.sp, fontWeight = FontWeight.Black, color = Ink, modifier = Modifier.align(Alignment.CenterHorizontally))
-        Text(subtitle, color = Ink.copy(alpha = 0.75f), textAlign = TextAlign.Center, modifier = Modifier.align(Alignment.CenterHorizontally).padding(vertical = 8.dp))
+        Box(
+            Modifier
+                .size(54.dp)
+                .clip(CircleShape)
+                .background(if (isWin) Sun.copy(alpha = 0.3f) else Sky.copy(alpha = 0.3f))
+                .border(2.5.dp, if (isWin) Sun else Sky, CircleShape)
+                .align(Alignment.CenterHorizontally),
+            contentAlignment = Alignment.Center
+        ) {
+            Text(celebratoryEmoji, fontSize = 28.sp)
+        }
+        Spacer(Modifier.height(8.dp))
+        Text(
+            if (isWin) "WOOHOO! AWESOME JOB! 🎉" else title,
+            fontSize = 24.sp,
+            fontWeight = FontWeight.Black,
+            color = Ink,
+            textAlign = TextAlign.Center,
+            modifier = Modifier.align(Alignment.CenterHorizontally)
+        )
+        Text(
+            subtitle,
+            color = Ink.copy(alpha = 0.75f),
+            fontWeight = FontWeight.Bold,
+            textAlign = TextAlign.Center,
+            modifier = Modifier.align(Alignment.CenterHorizontally).padding(vertical = 8.dp)
+        )
         Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-            GameButton("PLAY AGAIN", onAgain, Modifier.weight(1f), color = Leaf, fontSize = 15.sp)
-            GameButton("MENU", onExit, Modifier.weight(1f), color = Coral, fontSize = 15.sp)
+            GameButton("PLAY AGAIN 🔄", onAgain, Modifier.weight(1f), color = Leaf, fontSize = 15.sp)
+            GameButton("ALL GAMES 🏠", onExit, Modifier.weight(1f), color = Coral, fontSize = 15.sp)
         }
     }
 }
@@ -88,7 +116,7 @@ fun BotDifficultyCard(
     onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val shape = RoundedCornerShape(20.dp)
+    val shape = RoundedCornerShape(22.dp)
     val src = remember { MutableInteractionSource() }
     val isPressed by src.collectIsPressedAsState()
     val scale by animateFloatAsState(if (isPressed) 0.98f else 1f, label = "pressScale")
@@ -104,30 +132,30 @@ fun BotDifficultyCard(
         Box(
             Modifier
                 .matchParentSize()
-                .padding(top = 5.dp)
+                .padding(top = 6.dp)
                 .background(Ink, shape)
         )
         // Main tactile card
         Row(
             Modifier
                 .fillMaxWidth()
-                .padding(bottom = 5.dp)
+                .padding(bottom = 6.dp)
                 .clip(shape)
                 .background(Cream)
-                .border(3.dp, Ink, shape)
+                .border(3.2.dp, Ink, shape)
                 .padding(14.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
             // Cute Bot Avatar Bubble
             Box(
                 Modifier
-                    .size(54.dp)
+                    .size(56.dp)
                     .clip(CircleShape)
                     .background(color.copy(alpha = 0.25f))
                     .border(2.5.dp, color, CircleShape),
                 contentAlignment = Alignment.Center
             ) {
-                Text(difficulty.avatar(), fontSize = 28.sp)
+                Text(difficulty.avatar(), fontSize = 30.sp)
             }
 
             Spacer(Modifier.width(14.dp))
@@ -141,7 +169,7 @@ fun BotDifficultyCard(
                         fontWeight = FontWeight.Black
                     )
                     Spacer(Modifier.width(8.dp))
-                    // XP Reward Pill
+                    // Stars Reward Pill
                     Box(
                         Modifier
                             .clip(RoundedCornerShape(8.dp))
@@ -150,19 +178,20 @@ fun BotDifficultyCard(
                             .padding(horizontal = 7.dp, vertical = 2.dp)
                     ) {
                         Text(
-                            "+${difficulty.points} XP",
+                            "+${difficulty.points} ⭐ STARS",
                             color = Ink,
                             fontWeight = FontWeight.Black,
                             fontSize = 11.sp
                         )
                     }
                 }
-                Spacer(Modifier.height(2.dp))
+                Spacer(Modifier.height(3.dp))
                 Text(
                     difficulty.subtitle(),
-                    color = Ink.copy(alpha = 0.65f),
+                    color = Ink.copy(alpha = 0.7f),
+                    fontWeight = FontWeight.Bold,
                     fontSize = 12.sp,
-                    lineHeight = 15.sp
+                    lineHeight = 16.sp
                 )
             }
 
@@ -171,13 +200,13 @@ fun BotDifficultyCard(
             // Play arrow icon
             Box(
                 Modifier
-                    .size(34.dp)
+                    .size(36.dp)
                     .clip(CircleShape)
                     .background(color)
-                    .border(2.dp, Ink, CircleShape),
+                    .border(2.5.dp, Ink, CircleShape),
                 contentAlignment = Alignment.Center
             ) {
-                Text("▶", color = Ink, fontSize = 14.sp, fontWeight = FontWeight.Bold)
+                Text("▶", color = Ink, fontSize = 15.sp, fontWeight = FontWeight.Black)
             }
         }
     }
@@ -188,15 +217,16 @@ fun DifficultyPicker(title: String, onBack: () -> Unit, onPick: (Difficulty) -> 
     GameScaffold(title, onBack) {
         Spacer(Modifier.height(8.dp))
         Text(
-            "Select Bot Opponent",
+            "Choose Your Bot Buddy! 🤖🎈",
             color = Color.White,
-            fontSize = 19.sp,
+            fontSize = 20.sp,
             fontWeight = FontWeight.Black,
             modifier = Modifier.align(Alignment.Start).padding(start = 4.dp, bottom = 4.dp)
         )
         Text(
-            "Defeating tougher bots earns higher Arcade XP!",
-            color = Color.White.copy(alpha = 0.75f),
+            "Defeat bot buddies to win shiny trophies and superstar stars! ⭐",
+            color = Color.White.copy(alpha = 0.85f),
+            fontWeight = FontWeight.Bold,
             fontSize = 13.sp,
             modifier = Modifier.align(Alignment.Start).padding(start = 4.dp, bottom = 14.dp)
         )
@@ -205,7 +235,7 @@ fun DifficultyPicker(title: String, onBack: () -> Unit, onPick: (Difficulty) -> 
             Modifier
                 .fillMaxWidth()
                 .verticalScroll(rememberScrollState()),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
+            verticalArrangement = Arrangement.spacedBy(14.dp)
         ) {
             Difficulty.entries.forEach { diff ->
                 BotDifficultyCard(diff, onClick = { onPick(diff) })
@@ -228,11 +258,11 @@ fun SetupScreen(title: String, onBack: () -> Unit, maxPlayers: Int = 4, onStart:
             // Section 1: Play vs Bot Header
             Column {
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    Icon(Icons.Default.SmartToy, null, tint = Sun, modifier = Modifier.size(20.dp))
-                    Spacer(Modifier.width(6.dp))
-                    Text("PLAY VS BOT", color = Color.White, fontWeight = FontWeight.Black, fontSize = 16.sp)
+                    Icon(Icons.Default.SmartToy, null, tint = Sun, modifier = Modifier.size(22.dp))
+                    Spacer(Modifier.width(8.dp))
+                    Text("PLAY VS BOT BUDDIES 🤖", color = Color.White, fontWeight = FontWeight.Black, fontSize = 17.sp)
                 }
-                Text("Test your skills against different bot personalities", color = Color.White.copy(alpha = 0.7f), fontSize = 12.sp)
+                Text("Test your skills against friendly robot pals!", color = Color.White.copy(alpha = 0.8f), fontWeight = FontWeight.Bold, fontSize = 12.sp)
             }
 
             // The 3 appealing bot cards
@@ -248,30 +278,30 @@ fun SetupScreen(title: String, onBack: () -> Unit, maxPlayers: Int = 4, onStart:
             // Section 2: Pass & Play Friends
             CreamCard(Modifier.fillMaxWidth()) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    Icon(Icons.Default.Group, null, tint = Ink, modifier = Modifier.size(20.dp))
+                    Icon(Icons.Default.Group, null, tint = Ink, modifier = Modifier.size(22.dp))
                     Spacer(Modifier.width(8.dp))
-                    Text("PASS & PLAY WITH FRIENDS", color = Ink, fontWeight = FontWeight.Black, fontSize = 16.sp)
+                    Text("🎉 PLAY WITH FRIENDS ON 1 SCREEN! 🎈", color = Ink, fontWeight = FontWeight.Black, fontSize = 16.sp)
                 }
-                Text("Take turns on this device with local friends", color = Ink.copy(alpha = 0.65f), fontSize = 12.sp, modifier = Modifier.padding(bottom = 12.dp))
+                Text("Pass the phone to friends and take turns! 🎪", color = Ink.copy(alpha = 0.7f), fontWeight = FontWeight.Bold, fontSize = 12.sp, modifier = Modifier.padding(bottom = 12.dp))
 
                 Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                     for (n in 2..maxPlayers) {
                         GameButton(
-                            text = "$n Players",
+                            text = "$n Players 👫",
                             onClick = {
                                 onStart(List(n) { PlayerCfg("Player ${it + 1}", PLAYER_COLORS[it]) })
                             },
                             modifier = Modifier.weight(1f),
                             color = Sky,
-                            fontSize = 14.sp
+                            fontSize = 13.sp
                         )
                     }
                 }
 
                 if (maxPlayers >= 4) {
-                    Spacer(Modifier.height(8.dp))
+                    Spacer(Modifier.height(10.dp))
                     GameButton(
-                        text = "🎮 YOU + 3 BOTS (PARTY)",
+                        text = "🎮 PARTY: YOU + 3 BOT BUDDIES!",
                         onClick = {
                             onStart(listOf(PlayerCfg("You", Sun)) + (1..3).map { PlayerCfg("Bot $it", PLAYER_COLORS[it], Difficulty.MEDIUM) })
                         },

@@ -41,19 +41,19 @@ data class Game(
 )
 
 val allGames = listOf(
-    Game("flappy", "Flappy Bird", "🐦", "Tap to fly", Category.SINGLE, Sky),
-    Game("snake", "Snake", "🐍", "Eat and grow", Category.SINGLE, Leaf),
-    Game("2048", "2048", "🔢", "Merge tiles", Category.SINGLE, Tangerine),
-    Game("memory", "Memory Match", "🧠", "Find the pairs", Category.SINGLE, Coral),
-    Game("minesweeper", "Minesweeper", "💣", "Avoid the mines", Category.SINGLE, Grape),
-    Game("breakout", "Breakout", "🧱", "Smash the bricks", Category.SINGLE, Sun),
-    Game("whack", "Whack-a-Mole", "🔨", "Fast reflexes", Category.SINGLE, Leaf),
-    Game("tictactoe", "Tic Tac Toe", "❌", "Bot or friend", Category.BOT, Coral),
-    Game("connect4", "Connect Four", "🔴", "Drop and connect", Category.BOT, Sun),
-    Game("battleship", "Battleship", "🚢", "Sink the fleet", Category.BOT, Sky),
-    Game("rps", "Rock Paper Scissors", "✊", "Outsmart the bot", Category.BOT, Grape),
-    Game("minigolf", "Mini Golf Battle", "⛳", "2-4 players", Category.MULTI, Leaf),
-    Game("dots", "Dots & Boxes", "🔲", "2-4 players", Category.MULTI, Coral),
-    Game("ludo", "Ludo Race", "🎲", "2-4 players", Category.MULTI, Tangerine),
-    Game("online", "Online Rooms", "🌐", "Play with a join code", Category.MULTI, Sky)
+    Game("flappy", "Flappy Bird", "🐦", "Flap your wings! 🪽", Category.SINGLE, Sky),
+    Game("snake", "Snake", "🐍", "Munch juicy apples! 🍎", Category.SINGLE, Leaf),
+    Game("2048", "2048", "🔢", "Match the numbers! 🔢", Category.SINGLE, Tangerine),
+    Game("memory", "Memory Match", "🧠", "Find cute pairs! 🃏", Category.SINGLE, Coral),
+    Game("minesweeper", "Minesweeper", "💣", "Find safe tiles! 🚩", Category.SINGLE, Grape),
+    Game("breakout", "Breakout", "🧱", "Bounce & smash! 💥", Category.SINGLE, Sun),
+    Game("whack", "Whack-a-Mole", "🔨", "Whack funny moles! 🐹", Category.SINGLE, Leaf),
+    Game("tictactoe", "Tic Tac Toe", "❌", "3 in a row to win! ⭐", Category.BOT, Coral),
+    Game("connect4", "Connect Four", "🔴", "Connect 4 discs! 🟡", Category.BOT, Sun),
+    Game("battleship", "Battleship", "🚢", "Find hidden ships! 🌊", Category.BOT, Sky),
+    Game("rps", "Rock Paper Scissors", "✊", "Rock, Paper, Win! ✂️", Category.BOT, Grape),
+    Game("minigolf", "Mini Golf Battle", "⛳", "Putt & score! ⛳", Category.MULTI, Leaf),
+    Game("dots", "Dots & Boxes", "🔲", "Claim candy boxes! 🎁", Category.MULTI, Coral),
+    Game("ludo", "Ludo Race", "🎲", "Roll & race home! 🎲", Category.MULTI, Tangerine),
+    Game("online", "Online Rooms", "🌐", "Play with friends! 🎈", Category.MULTI, Sky)
 )
