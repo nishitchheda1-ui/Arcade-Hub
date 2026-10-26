@@ -21,12 +21,69 @@ import androidx.compose.ui.unit.*
 import kotlinx.coroutines.*
 import kotlin.math.*
 import kotlin.random.Random
+import androidx.compose.animation.core.animateDpAsState
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.collectIsPressedAsState
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.KeyboardArrowDown
+import androidx.compose.material.icons.filled.KeyboardArrowLeft
+import androidx.compose.material.icons.filled.KeyboardArrowRight
+import androidx.compose.material.icons.filled.KeyboardArrowUp
 import com.example.arcadehub.data.*
 import com.example.arcadehub.logic.*
 import com.example.arcadehub.ui.components.*
 import com.example.arcadehub.ui.theme.*
 
 // ======================= SNAKE =======================
+@Composable
+private fun SnakeDirButton(
+    icon: androidx.compose.ui.graphics.vector.ImageVector,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+    color: Color = Sky,
+    desc: String
+) {
+    val shape = RoundedCornerShape(18.dp)
+    val src = remember { MutableInteractionSource() }
+    val pressed by src.collectIsPressedAsState()
+    val lift by animateDpAsState(if (pressed) 0.dp else 4.dp, label = "dirLift")
+    val scale by animateFloatAsState(if (pressed) 0.94f else 1f, label = "dirScale")
+
+    Box(modifier.size(56.dp).scale(scale)) {
+        // 3D bottom bevel shadow
+        Box(
+            Modifier
+                .fillMaxSize()
+                .padding(top = 4.dp)
+                .background(Ink, shape)
+        )
+        // Main button face
+        Box(
+            Modifier
+                .fillMaxSize()
+                .padding(top = 4.dp - lift, bottom = lift)
+                .clip(shape)
+                .background(color)
+                .border(3.dp, Ink, shape)
+                .clickable(interactionSource = src, indication = null, onClick = onClick),
+            contentAlignment = Alignment.Center
+        ) {
+            // Subtle top gloss
+            Box(
+                Modifier
+                    .fillMaxWidth()
+                    .height(14.dp)
+                    .align(Alignment.TopCenter)
+                    .padding(horizontal = 6.dp, vertical = 2.dp)
+                    .clip(RoundedCornerShape(50))
+                    .background(Color.White.copy(alpha = 0.28f))
+            )
+            Icon(icon, desc, tint = Ink, modifier = Modifier.size(34.dp))
+        }
+    }
+}
+
 @Composable
 fun SnakeGame(onExit: () -> Unit) {
     val n = 18
@@ -59,33 +116,94 @@ fun SnakeGame(onExit: () -> Unit) {
     DisposableEffect(Unit) { onDispose { if (!over && score > 0) ScoreRepository.submitBest("snake", score) } }
 
     GameScaffold("Snake", onExit) {
-        Text("Apples Munched: $score 🍎", color = Sun, fontSize = 20.sp, fontWeight = FontWeight.Black)
-        Text("Swipe anywhere to steer your snake! 🐍", color = Color.White.copy(alpha = 0.85f), fontSize = 12.sp, fontWeight = FontWeight.Bold)
-        Spacer(Modifier.height(10.dp))
-        Canvas(
-            Modifier.fillMaxWidth().aspectRatio(1f).clip(RoundedCornerShape(16.dp)).pointerInput(Unit) {
-                var ax = 0f; var ay = 0f
-                detectDragGestures(onDragStart = { ax = 0f; ay = 0f }, onDrag = { c, d ->
-                    c.consume(); ax += d.x; ay += d.y
-                    if (abs(ax) > 40f || abs(ay) > 40f) {
-                        turn(if (abs(ax) > abs(ay)) (if (ax > 0) 1 else -1) to 0 else 0 to (if (ay > 0) 1 else -1))
-                        ax = 0f; ay = 0f
-                    }
-                })
-            }
+        Column(
+            Modifier
+                .fillMaxSize()
+                .verticalScroll(rememberScrollState()),
+            horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            val c = size.width / n
-            for (gx in 0 until n) for (gy in 0 until n)
-                drawRect(if ((gx + gy) % 2 == 0) Color(0xFFAAD751) else Color(0xFFA2D149), Offset(gx * c, gy * c), Size(c, c))
-            drawCircle(Ink, c * 0.42f, Offset(food.first * c + c / 2, food.second * c + c / 2))
-            drawCircle(Coral, c * 0.34f, Offset(food.first * c + c / 2, food.second * c + c / 2))
-            snake.forEachIndexed { i, p ->
-                drawRoundRect(Ink, Offset(p.first * c + 0.5f, p.second * c + 0.5f), Size(c - 1f, c - 1f), CornerRadius(c * 0.35f))
-                drawRoundRect(if (i == 0) Color(0xFF2F5FD0) else Color(0xFF4F86F7), Offset(p.first * c + 2.5f, p.second * c + 2.5f), Size(c - 5f, c - 5f), CornerRadius(c * 0.3f))
+            Text("Apples Munched: $score 🍎", color = Sun, fontSize = 20.sp, fontWeight = FontWeight.Black)
+            Text("Swipe or tap arrows to steer! 🐍", color = Color.White.copy(alpha = 0.85f), fontSize = 12.sp, fontWeight = FontWeight.Bold)
+            Spacer(Modifier.height(8.dp))
+            Canvas(
+                Modifier
+                    .fillMaxWidth()
+                    .aspectRatio(1f)
+                    .clip(RoundedCornerShape(16.dp))
+                    .pointerInput(Unit) {
+                        var ax = 0f; var ay = 0f
+                        detectDragGestures(onDragStart = { ax = 0f; ay = 0f }, onDrag = { c, d ->
+                            c.consume(); ax += d.x; ay += d.y
+                            if (abs(ax) > 35f || abs(ay) > 35f) {
+                                turn(if (abs(ax) > abs(ay)) (if (ax > 0) 1 else -1) to 0 else 0 to (if (ay > 0) 1 else -1))
+                                ax = 0f; ay = 0f
+                            }
+                        })
+                    }
+            ) {
+                val c = size.width / n
+                for (gx in 0 until n) for (gy in 0 until n)
+                    drawRect(if ((gx + gy) % 2 == 0) Color(0xFFAAD751) else Color(0xFFA2D149), Offset(gx * c, gy * c), Size(c, c))
+                drawCircle(Ink, c * 0.42f, Offset(food.first * c + c / 2, food.second * c + c / 2))
+                drawCircle(Coral, c * 0.34f, Offset(food.first * c + c / 2, food.second * c + c / 2))
+                snake.forEachIndexed { i, p ->
+                    drawRoundRect(Ink, Offset(p.first * c + 0.5f, p.second * c + 0.5f), Size(c - 1f, c - 1f), CornerRadius(c * 0.35f))
+                    drawRoundRect(if (i == 0) Color(0xFF2F5FD0) else Color(0xFF4F86F7), Offset(p.first * c + 2.5f, p.second * c + 2.5f), Size(c - 5f, c - 5f), CornerRadius(c * 0.3f))
+                }
+                drawFrame()
             }
-            drawFrame()
+            Spacer(Modifier.height(10.dp))
+            if (over) {
+                EndPanel("Oops! Bumped! 🐍", "You munched $score yummy apples! 🍎", { reset() }, onExit)
+            } else {
+                // Tactile D-Pad Controller
+                Column(
+                    Modifier.padding(vertical = 4.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.spacedBy(6.dp)
+                ) {
+                    SnakeDirButton(
+                        icon = Icons.Default.KeyboardArrowUp,
+                        onClick = { turn(0 to -1) },
+                        color = Sky,
+                        desc = "Up"
+                    )
+                    Row(
+                        horizontalArrangement = Arrangement.spacedBy(14.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        SnakeDirButton(
+                            icon = Icons.Default.KeyboardArrowLeft,
+                            onClick = { turn(-1 to 0) },
+                            color = Sky,
+                            desc = "Left"
+                        )
+                        Box(
+                            Modifier
+                                .size(56.dp)
+                                .clip(CircleShape)
+                                .background(Cream)
+                                .border(2.5.dp, Ink, CircleShape),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text("🍎", fontSize = 28.sp)
+                        }
+                        SnakeDirButton(
+                            icon = Icons.Default.KeyboardArrowRight,
+                            onClick = { turn(1 to 0) },
+                            color = Sky,
+                            desc = "Right"
+                        )
+                    }
+                    SnakeDirButton(
+                        icon = Icons.Default.KeyboardArrowDown,
+                        onClick = { turn(0 to 1) },
+                        color = Sky,
+                        desc = "Down"
+                    )
+                }
+            }
         }
-        if (over) EndPanel("Oops! Bumped! 🐍", "You munched $score yummy apples! 🍎", { reset() }, onExit)
     }
 }
 
