@@ -32,7 +32,7 @@ class AuthViewModel : ViewModel() {
 
     fun login(email: String, password: String, onSuccess: () -> Unit) {
         if (email.isBlank() || password.isBlank()) { state = AuthUiState(error = "Fill in all fields"); return }
-        run(onSuccess) { repo.login(email.trim(), password) }
+        run(onSuccess) { repo.login(email.trim().lowercase(), password) }
     }
 
     fun signUp(username: String, email: String, password: String, onSuccess: () -> Unit) {
@@ -40,7 +40,7 @@ class AuthViewModel : ViewModel() {
             username.trim().length < 3 -> state = AuthUiState(error = "Username must be at least 3 characters")
             email.isBlank() -> state = AuthUiState(error = "Enter your email")
             password.length < 6 -> state = AuthUiState(error = "Password must be at least 6 characters")
-            else -> run(onSuccess) { repo.signUp(username.trim(), email.trim(), password) }
+            else -> run(onSuccess) { repo.signUp(username.trim(), email.trim().lowercase(), password) }
         }
     }
 

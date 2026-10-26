@@ -48,7 +48,7 @@ object OnlineRepository {
     suspend fun create(game: String): String = withTimeout(15_000) { createRoom(game) }
 
     private suspend fun createRoom(game: String): String {
-        val u = auth.currentUser!!
+        val u = auth.currentUser ?: throw IllegalStateException("Please sign in with an account to play in online rooms")
         repeat(8) {
             val code = (1000..9999).random().toString()
             val ref = db.collection("rooms").document(code)
@@ -75,7 +75,7 @@ object OnlineRepository {
     suspend fun join(code: String): String? = withTimeout(15_000) { joinRoom(code) }
 
     private suspend fun joinRoom(code: String): String? {
-        val u = auth.currentUser!!
+        val u = auth.currentUser ?: throw IllegalStateException("Please sign in with an account to play in online rooms")
         val ref = db.collection("rooms").document(code)
         return db.runTransaction { t ->
             val s = t.get(ref)

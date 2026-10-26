@@ -337,7 +337,7 @@ fun OnlineGame(onExit: () -> Unit) {
                             Text("Round ${r.round}", color = Sun, fontWeight = FontWeight.Bold, fontSize = 13.sp)
                         }
                     }
-                    val mine = if (r.game == "ttt") (if (me == 1) "X" else "O") else (if (me == 1) "Pink" else "Green")
+                    val mine = if (r.game == "ttt") (if (me == 1) "X 🔷" else "O 🔴") else (if (me == 1) "Red 🔴" else "Yellow 🟡")
                     Text(
                         when {
                             r.status == "done" && r.winner == 3 -> "Draw!"
