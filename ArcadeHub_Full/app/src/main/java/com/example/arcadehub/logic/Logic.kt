@@ -42,6 +42,7 @@ fun tttResult(b: IntArray): Int {
 
 fun tttBotMove(b: IntArray, d: Difficulty, me: Int = 2): Int {
     val empty = b.indices.filter { b[it] == 0 }.shuffled()
+    if (empty.isEmpty()) return 0
     val opp = 3 - me
     fun finishing(p: Int) = empty.firstOrNull { i -> b[i] = p; val w = tttResult(b) == p; b[i] = 0; w }
     return when (d) {
@@ -138,10 +139,11 @@ private fun c4Search(b: IntArray, depth: Int, a0: Int, b0: Int, maxing: Boolean,
 
 fun c4BotMove(b: IntArray, d: Difficulty, me: Int = 2): Int {
     val valid = (0 until C4_C).filter { b[it] == 0 }
+    if (valid.isEmpty()) return 0
     fun winning(p: Int) = valid.firstOrNull { c -> val r = c4Drop(b, c, p); val w = c4Win(b, p); b[r * C4_C + c] = 0; w }
     return when (d) {
         Difficulty.EASY -> valid.random()
-        Difficulty.MEDIUM -> winning(me) ?: winning(3 - me) ?: valid.minByOrNull { abs(it - 3) + Random.nextInt(3) }!!
+        Difficulty.MEDIUM -> winning(me) ?: winning(3 - me) ?: valid.minByOrNull { abs(it - 3) + Random.nextInt(3) } ?: valid.first()
         Difficulty.HARD -> {
             var best = Int.MIN_VALUE; var bc = valid.first()
             for (c in C4_ORDER.filter { it in valid }) {

@@ -58,6 +58,7 @@ private fun neighbors(i: Int): List<Int> {
 /** Bot shooting logic. Easy = random, Medium = hunt on a checkerboard + chase hits, Hard = probability density. */
 private fun botShot(shots: List<Int>, ships: List<List<Int>>, d: Difficulty): Int {
     val unfired = (0..99).filter { shots[it] == 0 }
+    if (unfired.isEmpty()) return 0
     val sunkCells = ships.filter { s -> s.all { shots[it] == 2 } }.flatten().toSet()
     val activeHits = (0..99).filter { shots[it] == 2 && it !in sunkCells }
     if (d == Difficulty.EASY) return unfired.random()
@@ -77,8 +78,9 @@ private fun botShot(shots: List<Int>, ships: List<List<Int>>, d: Difficulty): In
             for (cell in cells) if (shots[cell] == 0) dens[cell] += weight
         }
     }
-    val best = unfired.maxOf { dens[it] }
-    return unfired.filter { dens[it] == best }.random()
+    val best = unfired.maxOfOrNull { dens[it] } ?: 0
+    val bestCands = unfired.filter { dens[it] == best }
+    return bestCands.randomOrNull() ?: unfired.first()
 }
 
 @Composable

@@ -70,6 +70,7 @@ private fun DotsPlay(ps: List<PlayerCfg>, onExit: () -> Unit, onAgain: () -> Uni
 
     fun botEdge(d: Difficulty): Int {
         val free = (0..39).filter { edges[it] == -1 }
+        if (free.isEmpty()) return 0
         fun sides(b: Int) = boxSides(b).count { edges[it] != -1 }
         if (d == Difficulty.EASY) return free.random()
         val completing = free.filter { e -> boxesOf(e).any { sides(it) == 3 } }
@@ -77,7 +78,7 @@ private fun DotsPlay(ps: List<PlayerCfg>, onExit: () -> Unit, onAgain: () -> Uni
         if (d == Difficulty.MEDIUM) return free.random()
         val safe = free.filter { e -> boxesOf(e).all { sides(it) < 2 } }
         if (safe.isNotEmpty()) return safe.random()
-        return free.minByOrNull { e -> boxesOf(e).count { sides(it) == 2 } }!!
+        return free.minByOrNull { e -> boxesOf(e).count { sides(it) == 2 } } ?: free.first()
     }
 
     val taken = edges.count { it != -1 }
@@ -373,11 +374,12 @@ private fun LudoPlay(ps: List<PlayerCfg>, onExit: () -> Unit, onAgain: () -> Uni
 
     fun botChoice(): Int {
         val m = movable()
+        if (m.isEmpty()) return 0
         val capture = m.firstOrNull { t ->
             val np = min(31, tokens[turn][t] + dice)
             np in 1..30 && (0 until n).any { o -> o != turn && tokens[o].any { it == np } }
         }
-        return capture ?: m.maxByOrNull { tokens[turn][it] }!!
+        return capture ?: m.maxByOrNull { tokens[turn][it] } ?: m.first()
     }
 
     fun rollDice() {
