@@ -23,6 +23,9 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import com.example.arcadehub.data.ScoreRepository
 import com.example.arcadehub.model.Category
 import com.example.arcadehub.model.Game
@@ -40,7 +43,21 @@ fun HomeScreen(
 ) {
     var filter by remember { mutableStateOf<Category?>(null) }
     val games = allGames.filter { filter == null || it.category == filter }
-    val totalPoints = ScoreRepository.getTotalPoints()
+    var totalPoints by remember { mutableStateOf(ScoreRepository.getTotalPoints()) }
+
+    val lifecycleOwner = LocalLifecycleOwner.current
+    DisposableEffect(lifecycleOwner) {
+        val observer = LifecycleEventObserver { _, event ->
+            if (event == Lifecycle.Event.ON_RESUME) {
+                totalPoints = ScoreRepository.getTotalPoints()
+            }
+        }
+        lifecycleOwner.lifecycle.addObserver(observer)
+        onDispose {
+            lifecycleOwner.lifecycle.removeObserver(observer)
+        }
+    }
+
     val tier = ScoreRepository.getTier(totalPoints)
 
     val kidAvatars = listOf("🦁", "🦊", "🐼", "🦄", "🐯", "🐶", "🐱", "🚀", "👾", "🐻")
@@ -114,7 +131,7 @@ fun HomeScreen(
                     .padding(horizontal = 12.dp, vertical = 6.dp)
             ) {
                 Text(
-                    "🌈 Pick a game & have fun! Beat records & collect stars! ✨",
+                    "🌈 $tier · Beat records & collect stars! ✨",
                     color = Color.White.copy(alpha = 0.9f),
                     fontWeight = FontWeight.Bold,
                     fontSize = 12.sp

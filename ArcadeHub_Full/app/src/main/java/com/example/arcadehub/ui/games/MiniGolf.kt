@@ -204,9 +204,11 @@ private fun GolfPlay(ps: List<PlayerCfg>, onExit: () -> Unit, onAgain: () -> Uni
         }
         Text(ps.indices.joinToString("   ") { "${ps[it].name}: ${totals[it]}" }, color = Color.White.copy(alpha = 0.8f), fontSize = 12.sp)
         if (finished) {
-            val best = totals.min()
-            val winners = ps.indices.filter { totals[it] == best }.joinToString(" & ") { ps[it].name }
-            EndPanel("$winners wins!", ps.indices.joinToString("  ") { "${ps[it].name} ${totals[it]}" } + " strokes", onAgain, onExit)
+            val best = totals.minOrNull() ?: 0
+            val bestIndices = ps.indices.filter { totals[it] == best }
+            val winners = bestIndices.joinToString(" & ") { ps[it].name }
+            val title = if (bestIndices.size > 1) "$winners tie! 🤝" else "$winners wins! ⛳"
+            EndPanel(title, ps.indices.joinToString("  ") { "${ps[it].name} ${totals[it]}" } + " strokes", onAgain, onExit)
         }
     }
 }

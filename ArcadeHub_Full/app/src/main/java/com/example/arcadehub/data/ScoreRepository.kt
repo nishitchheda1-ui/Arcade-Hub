@@ -199,7 +199,7 @@ object ScoreRepository {
                     entries.map {
                         if (it.uid == currentUid && localScore > it.score) it.copy(score = localScore)
                         else it
-                    }
+                    }.sortedByDescending { it.score }
                 }
                 return merged
             }
