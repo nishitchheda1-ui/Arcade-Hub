@@ -68,29 +68,36 @@ fun MemoryGame(onExit: () -> Unit) {
     }
 
     GameScaffold("Memory Match", onExit) {
-        Text("Moves: $moves   Time: ${secs}s ⭐", color = Coral, fontSize = 18.sp, fontWeight = FontWeight.Black)
-        Spacer(Modifier.height(14.dp))
-        Column(Modifier.fillMaxWidth().aspectRatio(1f), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            for (r in 0..3) Row(Modifier.weight(1f), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                for (c in 0..3) {
-                    val i = r * 4 + c
-                    val card = cards[i]
-                    val shape = RoundedCornerShape(16.dp)
-                    Box(Modifier.weight(1f).fillMaxHeight()) {
-                        Box(Modifier.fillMaxSize().padding(top = 4.dp).background(Ink, shape))
-                        Box(
-                            Modifier.fillMaxSize().padding(bottom = 4.dp)
-                                .clip(shape)
-                                .background(if (card.up || card.done) Cream else Grape)
-                                .border(3.dp, if (card.done) Leaf else Ink, shape)
-                                .clickable { tap(i) },
-                            contentAlignment = Alignment.Center
-                        ) { Text(if (card.up || card.done) card.e else "⭐", fontSize = 34.sp, color = if (card.up || card.done) Ink else Sun) }
+        Column(
+            Modifier
+                .fillMaxSize()
+                .verticalScroll(rememberScrollState()),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Text("Moves: $moves   Time: ${secs}s ⭐", color = Coral, fontSize = 18.sp, fontWeight = FontWeight.Black)
+            Spacer(Modifier.height(14.dp))
+            Column(Modifier.fillMaxWidth().aspectRatio(1f), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                for (r in 0..3) Row(Modifier.weight(1f), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    for (c in 0..3) {
+                        val i = r * 4 + c
+                        val card = cards[i]
+                        val shape = RoundedCornerShape(16.dp)
+                        Box(Modifier.weight(1f).fillMaxHeight()) {
+                            Box(Modifier.fillMaxSize().padding(top = 4.dp).background(Ink, shape))
+                            Box(
+                                Modifier.fillMaxSize().padding(bottom = 4.dp)
+                                    .clip(shape)
+                                    .background(if (card.up || card.done) Cream else Grape)
+                                    .border(3.dp, if (card.done) Leaf else Ink, shape)
+                                    .clickable { tap(i) },
+                                contentAlignment = Alignment.Center
+                            ) { Text(if (card.up || card.done) card.e else "⭐", fontSize = 34.sp, color = if (card.up || card.done) Ink else Sun) }
+                        }
                     }
                 }
             }
+            if (won) EndPanel("Pairs Matched! Woohoo! 🃏🎉", "Score: ${score()}  ($moves moves, ${secs}s) ⭐", { reset() }, onExit)
         }
-        if (won) EndPanel("Pairs Matched! Woohoo! 🃏🎉", "Score: ${score()}  ($moves moves, ${secs}s) ⭐", { reset() }, onExit)
     }
 }
 
@@ -128,11 +135,17 @@ fun MinesweeperGame(onExit: () -> Unit) {
     }
     fun reveal(i: Int) {
         val list = cells.toMutableList(); val stack = mutableListOf(i)
+        val visited = BooleanArray(size * size)
         while (stack.isNotEmpty()) {
-            val k = stack.removeAt(stack.lastIndex); val c = list[k]
+            val k = stack.removeAt(stack.lastIndex)
+            if (visited[k]) continue
+            visited[k] = true
+            val c = list[k]
             if (c.open) continue
             list[k] = c.copy(open = true)
-            if (c.n == 0 && !c.mine) stack.addAll(nbrs(k))
+            if (c.n == 0 && !c.mine) {
+                for (nb in nbrs(k)) if (!visited[nb] && !list[nb].open) stack.add(nb)
+            }
         }
         cells = list
     }
@@ -147,29 +160,36 @@ fun MinesweeperGame(onExit: () -> Unit) {
     val remainingSafe = (size * size - mineCount) - cells.count { it.open && !it.mine }
 
     GameScaffold("Minesweeper", onExit) {
-        Text("⏱ ${secs}s    💣 $mineCount mines    ⛳ Remaining: $remainingSafe", color = Color.White, fontSize = 16.sp, fontWeight = FontWeight.Black)
-        Text("Tap any square to dig. Clear all safe squares without hitting a mine!", color = Color.White.copy(alpha = 0.75f), fontSize = 12.sp)
-        Spacer(Modifier.height(14.dp))
-        Box(Modifier.fillMaxWidth().aspectRatio(1f).clip(RoundedCornerShape(16.dp)).background(Ink).padding(4.dp).clip(RoundedCornerShape(12.dp))) {
-            Column(Modifier.fillMaxSize()) {
-                for (r in 0 until size) Row(Modifier.weight(1f)) {
-                    for (c in 0 until size) {
-                        val i = r * size + c; val cell = cells[i]; val dark = (r + c) % 2 == 0
-                        val bg = when {
-                            cell.open && cell.mine -> Coral
-                            cell.open -> if (dark) Color(0xFFE5C29F) else Color(0xFFD7B899)
-                            else -> if (dark) Color(0xFFAAD751) else Color(0xFFA2D149)
-                        }
-                        Box(Modifier.weight(1f).fillMaxHeight().background(bg).clickable { tap(i) }, contentAlignment = Alignment.Center) {
-                            val t = when { cell.open && cell.mine -> "💣"; cell.open && cell.n > 0 -> "${cell.n}"; else -> "" }
-                            Text(t, color = numColor(cell.n), fontWeight = FontWeight.Black, fontSize = 18.sp)
+        Column(
+            Modifier
+                .fillMaxSize()
+                .verticalScroll(rememberScrollState()),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Text("⏱ ${secs}s    💣 $mineCount mines    ⛳ Remaining: $remainingSafe", color = Color.White, fontSize = 16.sp, fontWeight = FontWeight.Black)
+            Text("Tap any square to dig. Clear all safe squares without hitting a mine!", color = Color.White.copy(alpha = 0.75f), fontSize = 12.sp)
+            Spacer(Modifier.height(14.dp))
+            Box(Modifier.fillMaxWidth().aspectRatio(1f).clip(RoundedCornerShape(16.dp)).background(Ink).padding(4.dp).clip(RoundedCornerShape(12.dp))) {
+                Column(Modifier.fillMaxSize()) {
+                    for (r in 0 until size) Row(Modifier.weight(1f)) {
+                        for (c in 0 until size) {
+                            val i = r * size + c; val cell = cells[i]; val dark = (r + c) % 2 == 0
+                            val bg = when {
+                                cell.open && cell.mine -> Coral
+                                cell.open -> if (dark) Color(0xFFE5C29F) else Color(0xFFD7B899)
+                                else -> if (dark) Color(0xFFAAD751) else Color(0xFFA2D149)
+                            }
+                            Box(Modifier.weight(1f).fillMaxHeight().background(bg).clickable { tap(i) }, contentAlignment = Alignment.Center) {
+                                val t = when { cell.open && cell.mine -> "💣"; cell.open && cell.n > 0 -> "${cell.n}"; else -> "" }
+                                Text(t, color = numColor(cell.n), fontWeight = FontWeight.Black, fontSize = 18.sp)
+                            }
                         }
                     }
                 }
             }
+            if (won) EndPanel("Cleared! 🎉", "Time: ${secs}s", { reset() }, onExit)
+            if (over) EndPanel("Boom 💥", "You hit a mine", { reset() }, onExit)
         }
-        if (won) EndPanel("Cleared! 🎉", "Time: ${secs}s", { reset() }, onExit)
-        if (over) EndPanel("Boom 💥", "You hit a mine", { reset() }, onExit)
     }
 }
 
@@ -190,7 +210,7 @@ fun BreakoutGame(onExit: () -> Unit) {
     var over by remember { mutableStateOf(false) }
     val rowColors = listOf(Coral, Tangerine, Leaf, Sun, Grape)
 
-    fun reset() { px = 160f; bricks = List(40) { true }; lives = 3; score = 0; level = 1; started = false; over = false }
+    fun reset() { px = 160f; bx = 200f; ballY = 524f; vx = 0f; vy = 0f; bricks = List(40) { true }; lives = 3; score = 0; level = 1; started = false; over = false }
 
     LaunchedEffect(Unit) {
         var last = 0L
@@ -232,13 +252,29 @@ fun BreakoutGame(onExit: () -> Unit) {
         Box(Modifier.weight(1f).fillMaxWidth(), contentAlignment = Alignment.Center) {
             Canvas(
                 Modifier.aspectRatio(w / h).clip(RoundedCornerShape(14.dp))
-                    .pointerInput(Unit) {
-                        detectTapGestures {
-                            if (!started && !over) { started = true; vx = (Random.nextFloat() - 0.5f) * 240f; vy = -(340f + level * 30f) }
-                        }
+                    .pointerInput(level, over) {
+                        detectDragGestures(
+                            onDragStart = {
+                                if (!started && !over) {
+                                    started = true
+                                    vx = (Random.nextFloat() - 0.5f) * 240f
+                                    vy = -(340f + level * 30f)
+                                }
+                            },
+                            onDrag = { c, d ->
+                                c.consume()
+                                px = (px + d.x / (size.width / w)).coerceIn(0f, w - 80f)
+                            }
+                        )
                     }
-                    .pointerInput(Unit) {
-                        detectDragGestures { c, d -> c.consume(); px = (px + d.x / (size.width / w)).coerceIn(0f, w - 80f) }
+                    .pointerInput(level, over) {
+                        detectTapGestures {
+                            if (!started && !over) {
+                                started = true
+                                vx = (Random.nextFloat() - 0.5f) * 240f
+                                vy = -(340f + level * 30f)
+                            }
+                        }
                     }
             ) {
                 val s = size.width / w
@@ -276,25 +312,38 @@ fun WhackGame(onExit: () -> Unit) {
         }
     }
 
+    DisposableEffect(Unit) {
+        onDispose {
+            if (score > 0) ScoreRepository.submitBest("whack", score)
+        }
+    }
+
     GameScaffold("Whack-a-Mole", onExit) {
-        Text("Moles Whacked: $score 🔨    Time: ${time}s", color = Sun, fontSize = 20.sp, fontWeight = FontWeight.Black)
-        Spacer(Modifier.height(16.dp))
         Column(
-            Modifier.fillMaxWidth().aspectRatio(1f).background(Color(0xFF7BC96F), RoundedCornerShape(20.dp)).border(4.dp, Ink, RoundedCornerShape(20.dp)).padding(14.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
+            Modifier
+                .fillMaxSize()
+                .verticalScroll(rememberScrollState()),
+            horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            for (r in 0..2) Row(Modifier.weight(1f), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                for (c in 0..2) {
-                    val i = r * 3 + c
-                    Box(
-                        Modifier.weight(1f).fillMaxHeight().background(if (mole == i) Color(0xFF8B5A2B) else Color(0xFF5D3A1A), CircleShape)
-                            .border(4.dp, Ink, CircleShape)
-                            .clickable { if (time > 0 && mole == i) { score++; mole = -1 } },
-                        contentAlignment = Alignment.Center
-                    ) { if (mole == i) Text("🐹", fontSize = 44.sp) }
+            Text("Moles Whacked: $score 🔨    Time: ${time}s", color = Sun, fontSize = 20.sp, fontWeight = FontWeight.Black)
+            Spacer(Modifier.height(16.dp))
+            Column(
+                Modifier.fillMaxWidth().aspectRatio(1f).background(Color(0xFF7BC96F), RoundedCornerShape(20.dp)).border(4.dp, Ink, RoundedCornerShape(20.dp)).padding(14.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                for (r in 0..2) Row(Modifier.weight(1f), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                    for (c in 0..2) {
+                        val i = r * 3 + c
+                        Box(
+                            Modifier.weight(1f).fillMaxHeight().background(if (mole == i) Color(0xFF8B5A2B) else Color(0xFF5D3A1A), CircleShape)
+                                .border(4.dp, Ink, CircleShape)
+                                .clickable { if (time > 0 && mole == i) { score++; mole = -1 } },
+                            contentAlignment = Alignment.Center
+                        ) { if (mole == i) Text("🐹", fontSize = 44.sp) }
+                    }
                 }
             }
+            if (time == 0) EndPanel("Time's Up! Super Whacking! 🐹", "You whacked $score cheeky moles! ⭐", { score = 0; time = 30; mole = -1; run++ }, onExit)
         }
-        if (time == 0) EndPanel("Time's Up! Super Whacking! 🐹", "You whacked $score cheeky moles! ⭐", { score = 0; time = 30; mole = -1; run++ }, onExit)
     }
 }

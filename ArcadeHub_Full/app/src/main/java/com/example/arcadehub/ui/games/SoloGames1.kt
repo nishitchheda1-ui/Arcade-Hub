@@ -240,6 +240,12 @@ fun FlappyGame(onExit: () -> Unit) {
         }
     }
 
+    DisposableEffect(Unit) {
+        onDispose {
+            if (!over && score > 0) ScoreRepository.submitBest("flappy", score)
+        }
+    }
+
     GameScaffold("Flappy Bird", onExit) {
         Text("Score: $score", color = Sun, fontSize = 22.sp, fontWeight = FontWeight.Black)
         Box(Modifier.weight(1f).fillMaxWidth(), contentAlignment = Alignment.Center) {
@@ -321,7 +327,6 @@ fun Game2048(onExit: () -> Unit) {
         score = newScore
         if (newScore > localBest) {
             localBest = newScore.toLong()
-            ScoreRepository.submitBest("2048", newScore)
         }
         if ((0..3).none { move2048(board, it).third }) {
             over = true
@@ -329,9 +334,9 @@ fun Game2048(onExit: () -> Unit) {
         }
     }
 
-    DisposableEffect(score) {
+    DisposableEffect(Unit) {
         onDispose {
-            if (score > 0) ScoreRepository.submitBest("2048", score)
+            if (!over && score > 0) ScoreRepository.submitBest("2048", score)
         }
     }
 
